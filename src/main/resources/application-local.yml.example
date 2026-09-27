@@ -1,0 +1,19 @@
+# MẪU cấu hình cho profile `local`.
+# Cách dùng: copy file này thành application-local.yml (cùng thư mục) rồi điền giá trị thật.
+# application-local.yml đã nằm trong .gitignore -> KHÔNG commit.
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/starshop?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: your_mysql_password
+
+  jpa:
+    show-sql: true
+
+server:
+  servlet:
+    jsp:
+      init-parameters:
+        # Tự biên dịch lại JSP khi sửa file (chỉ dùng khi dev)
+        development: true

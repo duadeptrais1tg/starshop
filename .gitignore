@@ -1,0 +1,41 @@
+# ===== Maven =====
+target/
+!.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+
+# ===== IntelliJ IDEA =====
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ===== VS Code =====
+.vscode/
+!.vscode/extensions.json
+
+# ===== Eclipse / STS =====
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+bin/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Secrets / local config (KHÔNG commit) =====
+.env
+.env.*
+application-local.yml
+src/main/resources/application-local.yml

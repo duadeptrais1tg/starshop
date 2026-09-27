@@ -1,0 +1,46 @@
+# Cấu hình chung (được commit). KHÔNG ghi bí mật vào file này:
+# giá trị bí mật đọc từ biến môi trường hoặc application-local.yml (không commit).
+spring:
+  application:
+    name: starshop
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  # View JSP: controller trả về "web/index" -> /WEB-INF/views/web/index.jsp
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+
+  # Datasource đọc từ biến môi trường (có thể ghi đè trong application-local.yml)
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/starshop?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # Tắt open-in-view: dữ liệu cho view được chuẩn bị xong ở tầng service (DTO)
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
+
+  # TẠM THỜI tắt auto-config của Spring Security để kiểm tra trang test.
+  # Xóa khối này ở chức năng A1 (feature Security + JWT) khi đã có SecurityConfig.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
