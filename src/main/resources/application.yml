@@ -44,3 +44,6 @@ server:
     encoding:
       charset: UTF-8
       force: true
+    session:
+      # Không gắn ;jsessionid vào URL (c:url), chỉ dùng cookie
+      tracking-modes: cookie

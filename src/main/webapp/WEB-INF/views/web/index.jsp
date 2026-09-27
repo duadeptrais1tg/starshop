@@ -3,15 +3,16 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>StarShop</title>
+    <title>Trang chủ</title>
 </head>
 <body>
-    <h1>StarShop is running</h1>
-    <%-- Kiểm tra JSTL (jakarta.tags.core) và dữ liệu từ controller --%>
-    <c:if test="${not empty serverTime}">
-        <p>Thời gian máy chủ: <c:out value="${serverTime}"/></p>
-    </c:if>
+<%-- Nội dung trang chủ sẽ được xây dựng ở chức năng trang chủ Guest (A4) --%>
+<section class="ss-hero mb-4">
+    <h1 class="display-6 fw-bold mb-2">Hoa tươi cho mọi khoảnh khắc</h1>
+    <p class="fs-3 mb-4 opacity-75">Chuỗi cửa hàng hoa StarShop – giao nhanh trong 2 giờ.</p>
+    <a href="<c:url value='/products/search'/>" class="btn btn-light btn-lg">
+        <i class="ti ti-flower me-1"></i> Xem sản phẩm
+    </a>
+</section>
 </body>
 </html>

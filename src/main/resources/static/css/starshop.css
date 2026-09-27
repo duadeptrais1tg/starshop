@@ -1,0 +1,91 @@
+/* =========================================================
+   StarShop – tùy biến giao diện trên nền Tabler (Bootstrap 5)
+   ========================================================= */
+
+/* ----- Màu chủ đạo: hồng hoa ----- */
+:root {
+    --tblr-primary: #d6336c;
+    --tblr-primary-rgb: 214, 51, 108;
+    --tblr-primary-fg: #ffffff;
+    --ss-brand-gradient: linear-gradient(135deg, #d6336c 0%, #f783ac 100%);
+}
+
+/* ----- Logo ----- */
+.ss-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--tblr-primary);
+    text-decoration: none;
+}
+
+.ss-brand:hover {
+    color: var(--tblr-primary);
+    text-decoration: none;
+}
+
+.ss-brand .ti {
+    font-size: 1.6rem;
+}
+
+/* ----- Header trang khách ----- */
+.ss-search {
+    max-width: 480px;
+}
+
+.ss-header-actions .nav-link {
+    position: relative;
+}
+
+.ss-header-actions .badge-count {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    font-size: .65rem;
+    padding: .2em .45em;
+}
+
+/* ----- Hero trang chủ ----- */
+.ss-hero {
+    background: var(--ss-brand-gradient);
+    color: #fff;
+    border-radius: var(--tblr-border-radius-lg);
+    padding: 3rem 2rem;
+}
+
+/* ----- Footer ----- */
+.ss-footer a {
+    color: inherit;
+}
+
+/* ----- Trang auth ----- */
+.ss-auth-bg {
+    background: linear-gradient(180deg, #fff0f6 0%, #f8f9fa 100%);
+}
+
+/* ----- Trang lỗi ----- */
+.ss-error-code {
+    font-size: 5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--tblr-primary);
+}
+
+/* ----- Sidebar dashboard: mục đang chọn ----- */
+.navbar-vertical .nav-link.active {
+    color: var(--tblr-primary);
+    font-weight: 600;
+}
+
+/* ----- Điện thoại ----- */
+@media (max-width: 767.98px) {
+    .ss-hero {
+        padding: 2rem 1.25rem;
+    }
+
+    .ss-error-code {
+        font-size: 3.5rem;
+    }
+}
