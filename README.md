@@ -75,6 +75,22 @@ Mở trình duyệt: <http://localhost:8080> → trang hiển thị **"StarShop 
 Chạy từ IntelliJ: mở class `com.starshop.StarShopApplication` → Run. Nếu JSP báo 404, chỉnh
 *Run Configuration → Working directory* thành `$MODULE_WORKING_DIR$`.
 
+### Dữ liệu mẫu (profile `local`)
+
+Lần chạy đầu, `DataSeeder` tự tạo role, 2 chi nhánh, 3 nhà vận chuyển, 1 shop, 6 danh mục, 30 sản phẩm
+và các tài khoản dưới đây (chỉ tạo khi bảng `users` còn trống). Mật khẩu chung: **`Starshop@123`**
+
+| Email | Vai trò |
+|-------|---------|
+| `admin@starshop.vn` | ADMIN |
+| `manager@starshop.vn` | MANAGER (chi nhánh StarShop Quận 1) |
+| `vendor@starshop.vn` | USER + VENDOR (shop "Hoa Tươi Ánh Sao") |
+| `shipper@starshop.vn` | SHIPPER (Giao Hàng Nhanh) |
+| `user@starshop.vn` | USER |
+
+Muốn tạo lại dữ liệu mẫu: xóa toàn bộ bảng trong database `starshop` rồi chạy lại ứng dụng.
+Thiết kế CSDL: xem [docs/erd.md](docs/erd.md).
+
 ### Build file war
 
 ```bash
