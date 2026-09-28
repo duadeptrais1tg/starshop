@@ -31,6 +31,15 @@ spring:
         jdbc:
           time_zone: Asia/Ho_Chi_Minh
 
+  # Upload file: 1 file tối đa 30MB (video), 1 request tối đa 60MB (ví dụ đánh giá: 5 ảnh x 5MB + 1 video 30MB).
+  # Giới hạn chi tiết theo loại file (ảnh 5MB, video 30MB) kiểm tra trong FileStorageService.
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 30MB
+      max-request-size: 60MB
+      file-size-threshold: 2MB
+
   # TẠM THỜI tắt auto-config của Spring Security để kiểm tra trang test.
   # Xóa khối này ở chức năng A1 (feature Security + JWT) khi đã có SecurityConfig.
   autoconfigure:
@@ -47,3 +56,13 @@ server:
     session:
       # Không gắn ;jsessionid vào URL (c:url), chỉ dùng cookie
       tracking-modes: cookie
+  tomcat:
+    # Cho Tomcat đọc hết request quá dung lượng để trả về trang lỗi thay vì ngắt kết nối
+    max-swallow-size: 100MB
+
+# Cloudinary: lấy ở Dashboard -> API Keys. Không ghi key thật vào file này.
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
+  folder: ${CLOUDINARY_FOLDER:starshop}

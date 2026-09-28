@@ -42,6 +42,12 @@ Sau đó sửa `username` / `password` trong file vừa tạo. File này đã n�
 | `DB_PASSWORD` | Mật khẩu MySQL | (rỗng) |
 | `SPRING_PROFILES_ACTIVE` | Profile đang chạy | `local` |
 | `PORT` | Cổng HTTP | `8080` |
+| `CLOUDINARY_CLOUD_NAME` | Cloud name (Cloudinary Dashboard) | (rỗng) |
+| `CLOUDINARY_API_KEY` | API key Cloudinary | (rỗng) |
+| `CLOUDINARY_API_SECRET` | API secret Cloudinary | (rỗng) |
+| `CLOUDINARY_FOLDER` | Thư mục gốc chứa file upload | `starshop` |
+
+> Chưa cấu hình Cloudinary thì ứng dụng vẫn chạy, chỉ chức năng upload ảnh/video báo lỗi.
 
 Ví dụ (PowerShell):
 
@@ -58,7 +64,7 @@ export DB_PASSWORD=your_password
 ```
 
 > Giá trị trong `application-local.yml` được ưu tiên hơn giá trị mặc định trong `application.yml`.
-> Các cấu hình bí mật khác (JWT, mail, Cloudinary, VNPAY) sẽ được bổ sung vào bảng trên khi làm các chức năng tương ứng.
+> Các cấu hình bí mật khác (JWT, mail, VNPAY) sẽ được bổ sung vào bảng trên khi làm các chức năng tương ứng.
 
 ## 3. Chạy ứng dụng
 
@@ -70,7 +76,7 @@ mvnw.cmd spring-boot:run
 ./mvnw spring-boot:run
 ```
 
-Mở trình duyệt: <http://localhost:8080> → trang hiển thị **"StarShop is running"**.
+Mở trình duyệt: <http://localhost:8080> → trang chủ StarShop.
 
 Chạy từ IntelliJ: mở class `com.starshop.StarShopApplication` → Run. Nếu JSP báo 404, chỉnh
 *Run Configuration → Working directory* thành `$MODULE_WORKING_DIR$`.
