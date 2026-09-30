@@ -40,13 +40,6 @@ spring:
       max-request-size: 60MB
       file-size-threshold: 2MB
 
-  # TẠM THỜI tắt auto-config của Spring Security để kiểm tra trang test.
-  # Xóa khối này ở chức năng A1 (feature Security + JWT) khi đã có SecurityConfig.
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
-      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
-
 server:
   port: ${PORT:8080}
   servlet:
@@ -59,6 +52,13 @@ server:
   tomcat:
     # Cho Tomcat đọc hết request quá dung lượng để trả về trang lỗi thay vì ngắt kết nối
     max-swallow-size: 100MB
+
+# JWT lưu trong cookie HttpOnly ACCESS_TOKEN. JWT_SECRET: chuỗi ngẫu nhiên >= 32 ký tự, KHÔNG commit.
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration: ${JWT_EXPIRATION:8h}
+  # Đặt true khi chạy HTTPS
+  cookie-secure: ${JWT_COOKIE_SECURE:false}
 
 # Cloudinary: lấy ở Dashboard -> API Keys. Không ghi key thật vào file này.
 cloudinary:

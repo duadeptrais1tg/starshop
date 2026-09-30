@@ -30,4 +30,21 @@
     }
 
     document.addEventListener('DOMContentLoaded', highlightActiveNav);
+
+    /**
+     * Header CSRF cho request AJAX thay đổi dữ liệu (POST/PUT/DELETE).
+     * Ví dụ: fetch('/api/cart', {method: 'POST', headers: StarShop.csrfHeaders({'Content-Type': 'application/json'}), body: ...})
+     */
+    function csrfHeaders(extra) {
+        var headers = Object.assign({}, extra);
+        var token = document.querySelector('meta[name="_csrf"]');
+        var name = document.querySelector('meta[name="_csrf_header"]');
+        if (token && name) {
+            headers[name.content] = token.content;
+        }
+        return headers;
+    }
+
+    window.StarShop = window.StarShop || {};
+    window.StarShop.csrfHeaders = csrfHeaders;
 })();

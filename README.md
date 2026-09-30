@@ -42,6 +42,9 @@ Sau đó sửa `username` / `password` trong file vừa tạo. File này đã n�
 | `DB_PASSWORD` | Mật khẩu MySQL | (rỗng) |
 | `SPRING_PROFILES_ACTIVE` | Profile đang chạy | `local` |
 | `PORT` | Cổng HTTP | `8080` |
+| `JWT_SECRET` | Khóa ký JWT, chuỗi ngẫu nhiên ≥ 32 ký tự (**bắt buộc**) | (không có) |
+| `JWT_EXPIRATION` | Thời hạn đăng nhập, ví dụ `8h`, `30m` | `8h` |
+| `JWT_COOKIE_SECURE` | `true` khi chạy HTTPS | `false` |
 | `CLOUDINARY_CLOUD_NAME` | Cloud name (Cloudinary Dashboard) | (rỗng) |
 | `CLOUDINARY_API_KEY` | API key Cloudinary | (rỗng) |
 | `CLOUDINARY_API_SECRET` | API secret Cloudinary | (rỗng) |
@@ -64,7 +67,7 @@ export DB_PASSWORD=your_password
 ```
 
 > Giá trị trong `application-local.yml` được ưu tiên hơn giá trị mặc định trong `application.yml`.
-> Các cấu hình bí mật khác (JWT, mail, VNPAY) sẽ được bổ sung vào bảng trên khi làm các chức năng tương ứng.
+> Các cấu hình bí mật khác (mail, VNPAY) sẽ được bổ sung vào bảng trên khi làm các chức năng tương ứng.
 
 ## 3. Chạy ứng dụng
 
@@ -103,6 +106,15 @@ Thiết kế CSDL: xem [docs/erd.md](docs/erd.md).
 ./mvnw clean package
 java -jar target/starshop-0.0.1-SNAPSHOT.war
 ```
+
+## Quy ước viết JSP
+
+- Dòng đầu mỗi trang: `<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" session="false" %>`
+  (`pageEncoding` để không lỗi tiếng Việt; `session="false"` vì ứng dụng stateless, đăng nhập bằng JWT).
+  File được `<%@ include %>` cũng phải có `<%@ page pageEncoding="UTF-8" %>`.
+- Mọi form `POST` phải có CSRF token:
+  `<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">`
+- AJAX thay đổi dữ liệu: `fetch(url, {method: 'POST', headers: StarShop.csrfHeaders({...}), ...})`.
 
 ## Cấu trúc thư mục
 

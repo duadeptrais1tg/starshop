@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,9 +51,6 @@ public class DataSeeder implements CommandLineRunner {
     private static final String DEFAULT_PASSWORD = "Starshop@123";
     private static final String IMAGE_URL = "https://images.unsplash.com/photo-%s?w=600&h=600&fit=crop&auto=format&q=80";
 
-    /** Mã hóa BCrypt, cùng thuật toán với PasswordEncoder của phần bảo mật. */
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
@@ -63,6 +59,7 @@ public class DataSeeder implements CommandLineRunner {
     private final ShopCommissionRepository shopCommissionRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional

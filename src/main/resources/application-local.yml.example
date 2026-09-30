@@ -11,6 +11,10 @@ spring:
   jpa:
     show-sql: true
 
+# JWT: chuỗi ngẫu nhiên >= 32 ký tự. Tạo nhanh: python -c "import secrets;print(secrets.token_urlsafe(48))"
+jwt:
+  secret: change_me_to_a_random_string_at_least_32_chars
+
 # Cloudinary (đăng ký miễn phí tại cloudinary.com -> Dashboard -> API Keys)
 cloudinary:
   cloud-name: your_cloud_name
