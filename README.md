@@ -45,6 +45,10 @@ Sau đó sửa `username` / `password` trong file vừa tạo. File này đã n�
 | `JWT_SECRET` | Khóa ký JWT, chuỗi ngẫu nhiên ≥ 32 ký tự (**bắt buộc**) | (không có) |
 | `JWT_EXPIRATION` | Thời hạn đăng nhập, ví dụ `8h`, `30m` | `8h` |
 | `JWT_COOKIE_SECURE` | `true` khi chạy HTTPS | `false` |
+| `MAIL_USERNAME` | Tài khoản SMTP (Gmail) gửi email OTP | (rỗng) |
+| `MAIL_PASSWORD` | Mật khẩu ứng dụng Gmail (không phải mật khẩu đăng nhập) | (rỗng) |
+| `MAIL_HOST` / `MAIL_PORT` | Máy chủ SMTP | `smtp.gmail.com` / `587` |
+| `MAIL_DEV_LOG_OTP` | `true`: chưa có SMTP thì in OTP ra console (chỉ dùng khi dev) | `false` |
 | `CLOUDINARY_CLOUD_NAME` | Cloud name (Cloudinary Dashboard) | (rỗng) |
 | `CLOUDINARY_API_KEY` | API key Cloudinary | (rỗng) |
 | `CLOUDINARY_API_SECRET` | API secret Cloudinary | (rỗng) |
@@ -67,7 +71,7 @@ export DB_PASSWORD=your_password
 ```
 
 > Giá trị trong `application-local.yml` được ưu tiên hơn giá trị mặc định trong `application.yml`.
-> Các cấu hình bí mật khác (mail, VNPAY) sẽ được bổ sung vào bảng trên khi làm các chức năng tương ứng.
+> Các cấu hình bí mật khác (VNPAY, MOMO) sẽ được bổ sung vào bảng trên khi làm các chức năng tương ứng.
 
 ## 3. Chạy ứng dụng
 

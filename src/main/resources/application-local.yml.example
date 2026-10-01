@@ -3,6 +3,9 @@
 # application-local.yml đã nằm trong .gitignore -> KHÔNG commit.
 
 spring:
+  mail:
+    username: your_gmail@gmail.com
+    password: your_app_password
   datasource:
     url: jdbc:mysql://localhost:3306/starshop?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
     username: root
@@ -14,6 +17,12 @@ spring:
 # JWT: chuỗi ngẫu nhiên >= 32 ký tự. Tạo nhanh: python -c "import secrets;print(secrets.token_urlsafe(48))"
 jwt:
   secret: change_me_to_a_random_string_at_least_32_chars
+
+# Email (Gmail: bật xác minh 2 bước -> Tài khoản Google -> Bảo mật -> Mật khẩu ứng dụng)
+#  spring.mail.username / password; nếu để trống thì bật dev-log-otp để xem OTP trong console
+app:
+  mail:
+    dev-log-otp: true
 
 # Cloudinary (đăng ký miễn phí tại cloudinary.com -> Dashboard -> API Keys)
 cloudinary:
