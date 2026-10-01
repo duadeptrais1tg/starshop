@@ -47,6 +47,26 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
         return authorities.stream().anyMatch(a -> authority.equals(a.getAuthority()));
     }
 
+    /**
+     * Trang mặc định sau khi đăng nhập, theo role "cao" nhất:
+     * ADMIN -> /admin, MANAGER -> /manager, VENDOR -> /vendor, SHIPPER -> /shipper, còn lại -> /.
+     */
+    public String getHomePath() {
+        if (hasRole(RoleName.ADMIN)) {
+            return "/admin";
+        }
+        if (hasRole(RoleName.MANAGER)) {
+            return "/manager";
+        }
+        if (hasRole(RoleName.VENDOR)) {
+            return "/vendor";
+        }
+        if (hasRole(RoleName.SHIPPER)) {
+            return "/shipper";
+        }
+        return "/";
+    }
+
     public List<String> getRoleNames() {
         return authorities.stream().map(a -> a.getAuthority().substring("ROLE_".length())).toList();
     }

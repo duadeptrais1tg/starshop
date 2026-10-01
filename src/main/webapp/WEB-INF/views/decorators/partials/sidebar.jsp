@@ -27,10 +27,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="<c:url value='/auth/logout'/>">
-                        <span class="nav-link-icon"><i class="ti ti-logout"></i></span>
-                        <span class="nav-link-title">Đăng xuất</span>
-                    </a>
+                    <%-- Đăng xuất bằng POST + CSRF (link GET có thể bị trang khác lợi dụng) --%>
+                    <form method="post" action="<c:url value='/auth/logout'/>" class="m-0">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                        <button type="submit" class="nav-link w-100 border-0 bg-transparent text-start">
+                            <span class="nav-link-icon"><i class="ti ti-logout"></i></span>
+                            <span class="nav-link-title">Đăng xuất</span>
+                        </button>
+                    </form>
                 </li>
             </ul>
         </div>

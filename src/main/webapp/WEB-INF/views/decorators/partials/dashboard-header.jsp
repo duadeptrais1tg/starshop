@@ -11,17 +11,16 @@
             </div>
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Tài khoản">
-                    <span class="avatar avatar-sm"><i class="ti ti-user"></i></span>
+                    <span class="avatar avatar-sm bg-primary-lt text-primary fw-bold"><c:out value="${empty currentUser ? '?' : currentUser.initial}"/></span>
                     <div class="d-none d-xl-block ps-2">
-                        <%-- Tên người đăng nhập sẽ hiển thị khi có chức năng đăng nhập (A3) --%>
-                        <div>Tài khoản</div>
+                        <div><c:out value="${empty currentUser ? 'Tài khoản' : currentUser.fullName}"/></div>
                         <div class="mt-1 small text-secondary"><c:out value="${ssAreaName}"/></div>
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
                     <a href="<c:url value='/user/profile'/>" class="dropdown-item">Hồ sơ</a>
                     <div class="dropdown-divider"></div>
-                    <a href="<c:url value='/auth/logout'/>" class="dropdown-item">Đăng xuất</a>
+                    <%@ include file="logout-form.jsp" %>
                 </div>
             </div>
         </div>

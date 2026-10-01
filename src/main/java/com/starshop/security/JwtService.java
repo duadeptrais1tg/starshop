@@ -15,7 +15,7 @@ import java.util.Date;
 
 /**
  * Tạo / kiểm tra JWT và cookie chứa JWT.
- * Token ký bằng HMAC-SHA256; subject = email, claim "uid" = id user, "roles" = danh sách role.
+ * Token ký bằng HMAC-SHA (jjwt tự chọn HS256/HS384/HS512 theo độ dài secret); subject = email, claim "uid" = id user, "roles" = danh sách role.
  */
 @Service
 public class JwtService {

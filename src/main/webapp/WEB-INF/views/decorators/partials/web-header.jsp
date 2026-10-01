@@ -18,16 +18,58 @@
                     <span class="badge bg-primary text-white badge-count d-none" id="cart-count">0</span>
                 </a>
             </div>
-            <%-- Khu vực tài khoản: hiện đang cho Guest; phần đăng nhập (A3) sẽ hiển thị tên user + menu theo role --%>
-            <div class="nav-item d-none d-md-flex flex-row align-items-center flex-nowrap ms-2">
-                <a href="<c:url value='/auth/login'/>" class="btn btn-outline-primary btn-sm text-nowrap me-2">Đăng nhập</a>
-                <a href="<c:url value='/auth/register'/>" class="btn btn-primary btn-sm text-nowrap">Đăng ký</a>
-            </div>
-            <div class="nav-item d-md-none">
-                <a href="<c:url value='/auth/login'/>" class="nav-link px-2" title="Đăng nhập">
-                    <i class="ti ti-user fs-2"></i>
-                </a>
-            </div>
+            <%-- Khu vực tài khoản: currentUser do CurrentUserAdvice đưa vào (null = khách) --%>
+            <c:choose>
+                <c:when test="${not empty currentUser}">
+                    <div class="nav-item dropdown ms-1">
+                        <a href="#" class="nav-link d-flex lh-1 text-reset p-0 ps-1" data-bs-toggle="dropdown"
+                           aria-label="Tài khoản" aria-expanded="false">
+                            <span class="avatar avatar-sm bg-primary-lt text-primary fw-bold"><c:out value="${currentUser.initial}"/></span>
+                            <span class="d-none d-lg-block ps-2 text-truncate" style="max-width:140px">
+                                <c:out value="${currentUser.fullName}"/>
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <div class="dropdown-header">
+                                <div class="fw-bold text-body"><c:out value="${currentUser.fullName}"/></div>
+                                <div class="small text-secondary"><c:out value="${currentUser.email}"/></div>
+                            </div>
+                            <a href="<c:url value='/user/profile'/>" class="dropdown-item"><i class="ti ti-user me-2"></i>Hồ sơ của tôi</a>
+                            <a href="<c:url value='/user/orders'/>" class="dropdown-item"><i class="ti ti-package me-2"></i>Đơn hàng</a>
+                            <a href="<c:url value='/user/favorites'/>" class="dropdown-item"><i class="ti ti-heart me-2"></i>Yêu thích</a>
+                            <a href="<c:url value='/user/viewed'/>" class="dropdown-item"><i class="ti ti-eye me-2"></i>Đã xem</a>
+                            <c:if test="${currentUser.admin or currentUser.manager or currentUser.vendor or currentUser.shipper}">
+                                <div class="dropdown-divider"></div>
+                                <c:if test="${currentUser.admin}">
+                                    <a href="<c:url value='/admin'/>" class="dropdown-item"><i class="ti ti-shield-lock me-2"></i>Trang quản trị</a>
+                                </c:if>
+                                <c:if test="${currentUser.manager}">
+                                    <a href="<c:url value='/manager'/>" class="dropdown-item"><i class="ti ti-building me-2"></i>Quản lý chi nhánh</a>
+                                </c:if>
+                                <c:if test="${currentUser.vendor}">
+                                    <a href="<c:url value='/vendor'/>" class="dropdown-item"><i class="ti ti-building-store me-2"></i>Kênh người bán</a>
+                                </c:if>
+                                <c:if test="${currentUser.shipper}">
+                                    <a href="<c:url value='/shipper'/>" class="dropdown-item"><i class="ti ti-truck-delivery me-2"></i>Kênh giao hàng</a>
+                                </c:if>
+                            </c:if>
+                            <div class="dropdown-divider"></div>
+                            <%@ include file="logout-form.jsp" %>
+                        </div>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="nav-item d-none d-md-flex flex-row align-items-center flex-nowrap ms-2">
+                        <a href="<c:url value='/auth/login'/>" class="btn btn-outline-primary btn-sm text-nowrap me-2">Đăng nhập</a>
+                        <a href="<c:url value='/auth/register'/>" class="btn btn-primary btn-sm text-nowrap">Đăng ký</a>
+                    </div>
+                    <div class="nav-item d-md-none">
+                        <a href="<c:url value='/auth/login'/>" class="nav-link px-2" title="Đăng nhập">
+                            <i class="ti ti-user fs-2"></i>
+                        </a>
+                    </div>
+                </c:otherwise>
+            </c:choose>
         </div>
 
         <div class="collapse navbar-collapse" id="web-menu">
@@ -64,12 +106,14 @@
                         <span class="nav-link-title">Đơn hàng</span>
                     </a>
                 </li>
-                <li class="nav-item d-md-none">
-                    <a class="nav-link" href="<c:url value='/auth/register'/>">
-                        <span class="nav-link-icon"><i class="ti ti-user-plus"></i></span>
-                        <span class="nav-link-title">Đăng ký</span>
-                    </a>
-                </li>
+                <c:if test="${empty currentUser}">
+                    <li class="nav-item d-md-none">
+                        <a class="nav-link" href="<c:url value='/auth/register'/>">
+                            <span class="nav-link-icon"><i class="ti ti-user-plus"></i></span>
+                            <span class="nav-link-title">Đăng ký</span>
+                        </a>
+                    </li>
+                </c:if>
             </ul>
         </div>
     </div>
