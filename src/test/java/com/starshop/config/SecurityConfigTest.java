@@ -11,6 +11,7 @@ import com.starshop.security.JwtAuthFilter;
 import com.starshop.security.JwtService;
 import com.starshop.security.LoginRedirectEntryPoint;
 import com.starshop.security.UserPrincipal;
+import com.starshop.service.AdminDashboardService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,10 @@ class SecurityConfigTest {
 
     @MockitoBean
     private CustomUserDetailsService userDetailsService;
+
+    /** AdminDashboardController cần service này; test chỉ kiểm tra phân quyền nên dùng mock. */
+    @MockitoBean
+    private AdminDashboardService adminDashboardService;
 
     private Cookie userCookie;
     private Cookie adminCookie;
