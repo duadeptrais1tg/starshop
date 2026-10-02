@@ -24,6 +24,9 @@ public interface ShopRepository extends JpaRepository<Shop, Long>, JpaSpecificat
 
     long countByStatus(ShopStatus status);
 
+    /** Shop theo trạng thái, sắp theo tên (ví dụ danh sách shop đang hoạt động cho bộ lọc). */
+    List<Shop> findByStatusOrderByNameAsc(ShopStatus status);
+
     /** Danh sách có phân trang, nạp sẵn chủ shop và chi nhánh (tránh N+1). */
     @Override
     @EntityGraph(attributePaths = {"owner", "store"})

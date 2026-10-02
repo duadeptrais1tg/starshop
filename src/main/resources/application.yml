@@ -6,6 +6,11 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
 
+  # Locale cố định tiếng Việt: JSTL fmt định dạng 550000 -> 550.000 (không phụ thuộc ngôn ngữ trình duyệt)
+  web:
+    locale: vi_VN
+    locale-resolver: fixed
+
   # View JSP: controller trả về "web/index" -> /WEB-INF/views/web/index.jsp
   mvc:
     view:
