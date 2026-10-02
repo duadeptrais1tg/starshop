@@ -36,6 +36,10 @@ public class Category extends BaseEntity {
     @Column(name = "image_url")
     private String imageUrl;
 
+    /** publicId trên Cloudinary, dùng để xóa ảnh cũ khi đổi ảnh / xóa danh mục. */
+    @Column(name = "image_public_id")
+    private String imagePublicId;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
