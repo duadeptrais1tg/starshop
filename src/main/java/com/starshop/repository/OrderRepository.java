@@ -15,6 +15,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByCode(String code);
 
+    boolean existsByCarrierId(Long carrierId);
+
     /** Tổng tiền các đơn ở một trạng thái (tính trong DB, không lặp trong Java). */
     @Query("select coalesce(sum(o.total), 0) from Order o where o.status = :status")
     BigDecimal sumTotalByStatus(@Param("status") OrderStatus status);
