@@ -21,6 +21,7 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
     private final Long id;
     private final String email;
     private final String fullName;
+    private final String avatarUrl;
     private String password;
     private final boolean enabled;
     private final boolean locked;
@@ -30,6 +31,7 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
         this.id = user.getId();
         this.email = user.getEmail();
         this.fullName = user.getFullName();
+        this.avatarUrl = user.getAvatarUrl();
         this.password = user.getPassword();
         this.enabled = user.isEnabled();
         this.locked = user.isLocked();

@@ -24,7 +24,14 @@
                     <div class="nav-item dropdown ms-1">
                         <a href="#" class="nav-link d-flex lh-1 text-reset p-0 ps-1" data-bs-toggle="dropdown"
                            aria-label="Tài khoản" aria-expanded="false">
-                            <span class="avatar avatar-sm bg-primary-lt text-primary fw-bold"><c:out value="${currentUser.initial}"/></span>
+                            <c:choose>
+                                <c:when test="${not empty currentUser.avatarUrl}">
+                                    <span class="avatar avatar-sm" style="background-image: url('<c:out value="${currentUser.avatarUrl}"/>')"></span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="avatar avatar-sm bg-primary-lt text-primary fw-bold"><c:out value="${currentUser.initial}"/></span>
+                                </c:otherwise>
+                            </c:choose>
                             <span class="d-none d-lg-block ps-2 text-truncate" style="max-width:140px">
                                 <c:out value="${currentUser.fullName}"/>
                             </span>
@@ -35,6 +42,7 @@
                                 <div class="small text-secondary"><c:out value="${currentUser.email}"/></div>
                             </div>
                             <a href="<c:url value='/user/profile'/>" class="dropdown-item"><i class="ti ti-user me-2"></i>Hồ sơ của tôi</a>
+                            <a href="<c:url value='/user/addresses'/>" class="dropdown-item"><i class="ti ti-map-pin me-2"></i>Sổ địa chỉ</a>
                             <a href="<c:url value='/user/orders'/>" class="dropdown-item"><i class="ti ti-package me-2"></i>Đơn hàng</a>
                             <a href="<c:url value='/user/favorites'/>" class="dropdown-item"><i class="ti ti-heart me-2"></i>Yêu thích</a>
                             <a href="<c:url value='/user/viewed'/>" class="dropdown-item"><i class="ti ti-eye me-2"></i>Đã xem</a>

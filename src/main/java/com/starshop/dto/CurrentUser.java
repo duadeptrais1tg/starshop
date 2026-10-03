@@ -14,6 +14,7 @@ public class CurrentUser {
     private final Long id;
     private final String fullName;
     private final String email;
+    private final String avatarUrl;
     private final String homePath;
     private final boolean admin;
     private final boolean manager;
@@ -24,6 +25,7 @@ public class CurrentUser {
         this.id = principal.getId();
         this.fullName = principal.getFullName();
         this.email = principal.getEmail();
+        this.avatarUrl = principal.getAvatarUrl();
         this.homePath = principal.getHomePath();
         this.admin = principal.hasRole(RoleName.ADMIN);
         this.manager = principal.hasRole(RoleName.MANAGER);
