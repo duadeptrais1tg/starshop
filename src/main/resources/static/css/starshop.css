@@ -172,3 +172,67 @@
     background-clip: text;
     color: transparent;
 }
+
+/* ----- Trang chủ User: 5 card mỗi hàng trên màn hình lớn ----- */
+@media (min-width: 1200px) {
+    .ss-grid-5 > .col-xl {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+
+/* ----- Trang chi tiết sản phẩm: gallery ----- */
+.ss-gallery-main {
+    aspect-ratio: 1 / 1;
+    border-radius: var(--tblr-border-radius-lg);
+    overflow: hidden;
+    background: #fff0f6;
+}
+
+.ss-gallery-main img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ss-gallery-thumb {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: var(--tblr-border-radius);
+    overflow: hidden;
+    background: none;
+}
+
+.ss-gallery-thumb.active {
+    border-color: var(--tblr-primary);
+}
+
+.ss-gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ss-review-media img,
+.ss-review-media video {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: var(--tblr-border-radius);
+}
+
+/* Ô số lượng: bỏ nút tăng/giảm mặc định của trình duyệt (đã có nút -/+ riêng) */
+.ss-qty input {
+    padding-left: .25rem;
+    padding-right: .25rem;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.ss-qty input::-webkit-inner-spin-button,
+.ss-qty input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

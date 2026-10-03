@@ -73,4 +73,18 @@ public final class ProductSpecifications {
     public static Specification<Product> soldMoreThan(int quantity) {
         return (root, query, cb) -> cb.greaterThan(root.get("soldCount"), quantity);
     }
+
+    /** Đã có ít nhất một đánh giá. */
+    public static Specification<Product> hasReviews() {
+        return (root, query, cb) -> cb.greaterThan(root.get("reviewCount"), 0);
+    }
+
+    /** Đã có người thích. */
+    public static Specification<Product> hasFavorites() {
+        return (root, query, cb) -> cb.greaterThan(root.get("favoriteCount"), 0);
+    }
+
+    public static Specification<Product> idNot(Long id) {
+        return id == null ? null : (root, query, cb) -> cb.notEqual(root.get("id"), id);
+    }
 }

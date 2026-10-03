@@ -45,6 +45,50 @@
         return headers;
     }
 
+    /** Chống XSS khi chèn dữ liệu (tên sản phẩm, tên shop...) vào HTML. */
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    var priceFormat = new Intl.NumberFormat('vi-VN');
+
+    function stars(rounded) {
+        var html = '';
+        for (var i = 1; i <= 5; i++) {
+            var cls = i <= rounded ? ' on' : (i - 0.5 === rounded ? ' half' : '');
+            html += '<span class="ss-star' + cls + '">★</span>';
+        }
+        return html;
+    }
+
+    /**
+     * Dựng card sản phẩm từ JSON của /api/products. Markup giống common/product-card.jsp.
+     */
+    function renderProductCard(p) {
+        var url = '/products/' + encodeURIComponent(p.slug);
+        var img = p.imageUrl
+            ? '<img src="' + escapeHtml(p.imageUrl) + '" alt="' + escapeHtml(p.name) + '" loading="lazy">'
+            : '<span class="ss-product-noimg"><i class="ti ti-flower"></i></span>';
+        return '<div class="card card-sm h-100 ss-product-card">'
+            + '<a href="' + url + '" class="ss-product-thumb">' + img
+            + (p.discountPercent > 0 ? '<span class="badge bg-red text-white ss-product-badge">-' + p.discountPercent + '%</span>' : '')
+            + (!p.inStock ? '<span class="ss-product-soldout">Hết hàng</span>' : '')
+            + '</a><div class="card-body d-flex flex-column">'
+            + '<div class="small text-secondary text-truncate"><i class="ti ti-building-store me-1"></i>' + escapeHtml(p.shopName) + '</div>'
+            + '<a href="' + url + '" class="text-reset fw-semibold ss-line-2 mb-2" title="' + escapeHtml(p.name) + '">' + escapeHtml(p.name) + '</a>'
+            + '<div class="mt-auto"><div class="d-flex flex-wrap align-items-baseline gap-1">'
+            + '<span class="text-primary fw-bold fs-3">' + priceFormat.format(p.finalPrice) + '₫</span>'
+            + (p.compareAtPrice ? '<del class="text-secondary small">' + priceFormat.format(p.compareAtPrice) + '₫</del>' : '')
+            + '</div><div class="d-flex justify-content-between align-items-center small text-secondary mt-1">'
+            + '<span class="ss-stars">' + stars(p.ratingRounded) + (p.reviewCount > 0 ? '<span class="ms-1">(' + p.reviewCount + ')</span>' : '') + '</span>'
+            + '<span>Đã bán ' + priceFormat.format(p.soldCount) + '</span>'
+            + '</div></div></div></div>';
+    }
+
     window.StarShop = window.StarShop || {};
     window.StarShop.csrfHeaders = csrfHeaders;
+    window.StarShop.escapeHtml = escapeHtml;
+    window.StarShop.renderProductCard = renderProductCard;
 })();

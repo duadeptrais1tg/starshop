@@ -20,4 +20,7 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
     @Query("select i.product.id, i.url from ProductImage i where i.product.id in :productIds "
             + "order by i.product.id, i.thumbnail desc, i.sortOrder asc")
     List<Object[]> findImageUrlsByProductIds(@Param("productIds") Collection<Long> productIds);
+
+    /** Toàn bộ ảnh của một sản phẩm cho gallery: ảnh đại diện trước. */
+    List<ProductImage> findByProductIdOrderByThumbnailDescSortOrderAsc(Long productId);
 }

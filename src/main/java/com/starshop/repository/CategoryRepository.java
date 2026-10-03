@@ -33,6 +33,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSp
 
     List<Category> findByActiveTrueOrderByNameAsc();
 
+    List<Category> findByParentIdAndActiveTrueOrderByNameAsc(Long parentId);
+
     /** Danh sách có phân trang, nạp sẵn danh mục cha (tránh N+1). */
     @Override
     @EntityGraph(attributePaths = "parent")
