@@ -8,6 +8,7 @@ import com.starshop.dto.product.ProductDetailDto;
 import com.starshop.dto.product.ProductSearchCriteria;
 import com.starshop.dto.product.ProductSort;
 import com.starshop.dto.product.PromotionInfo;
+import com.starshop.dto.promotion.AutoPricing;
 import com.starshop.entity.Category;
 import com.starshop.entity.Coupon;
 import com.starshop.entity.Product;
@@ -24,6 +25,7 @@ import com.starshop.repository.PromotionRepository;
 import com.starshop.repository.ShopRepository;
 import com.starshop.repository.spec.ProductSpecifications;
 import com.starshop.service.ProductCatalogService;
+import com.starshop.service.PromotionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +34,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
@@ -55,6 +58,7 @@ public class ProductCatalogServiceImpl implements ProductCatalogService {
     private final PromotionRepository promotionRepository;
     private final CouponRepository couponRepository;
     private final Clock clock;
+    private final PromotionService promotionService;
 
     @Override
     public Page<ProductCardDto> bestSellers(int page) {
@@ -132,7 +136,9 @@ public class ProductCatalogServiceImpl implements ProductCatalogService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm " + slug));
         List<String> images = productImageRepository.findByProductIdOrderByThumbnailDescSortOrderAsc(product.getId())
                 .stream().map(ProductImage::getUrl).toList();
-        return ProductMapper.toDetail(product, images, activePromotions(product));
+        BigDecimal salePrice = promotionService.autoPricing()
+                .salePrice(product.getShop().getId(), product.getCategory().getId(), product.getPrice());
+        return ProductMapper.toDetail(product, images, activePromotions(product), salePrice);
     }
 
     @Override
@@ -176,7 +182,10 @@ public class ProductCatalogServiceImpl implements ProductCatalogService {
                 images.putIfAbsent((Long) row[0], (String) row[1]);
             }
         }
-        return products.map(p -> ProductMapper.toCard(p, images.get(p.getId())));
+        // Giá khuyến mãi tự áp dụng: lấy danh sách khuyến mãi đang chạy 1 lần cho cả trang
+        AutoPricing pricing = promotionService.autoPricing();
+        return products.map(p -> ProductMapper.toCard(p, images.get(p.getId()),
+                pricing.salePrice(p.getShop().getId(), p.getCategory().getId(), p.getPrice())));
     }
 
     /**

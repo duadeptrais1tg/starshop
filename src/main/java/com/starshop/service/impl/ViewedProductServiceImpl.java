@@ -1,6 +1,7 @@
 package com.starshop.service.impl;
 
 import com.starshop.dto.product.ProductCardDto;
+import com.starshop.dto.promotion.AutoPricing;
 import com.starshop.entity.Product;
 import com.starshop.entity.User;
 import com.starshop.entity.ViewedProduct;
@@ -9,6 +10,7 @@ import com.starshop.repository.ProductImageRepository;
 import com.starshop.repository.ProductRepository;
 import com.starshop.repository.UserRepository;
 import com.starshop.repository.ViewedProductRepository;
+import com.starshop.service.PromotionService;
 import com.starshop.service.ViewedProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ public class ViewedProductServiceImpl implements ViewedProductService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final Clock clock;
+    private final PromotionService promotionService;
 
     @Override
     @Transactional
@@ -60,7 +63,12 @@ public class ViewedProductServiceImpl implements ViewedProductService {
                 images.putIfAbsent((Long) row[0], (String) row[1]);
             }
         }
-        return viewed.map(v -> ProductMapper.toCard(v.getProduct(), images.get(v.getProduct().getId())));
+        AutoPricing pricing = promotionService.autoPricing();
+        return viewed.map(v -> {
+            Product p = v.getProduct();
+            return ProductMapper.toCard(p, images.get(p.getId()),
+                    pricing.salePrice(p.getShop().getId(), p.getCategory().getId(), p.getPrice()));
+        });
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.starshop.repository.ProductImageRepository;
 import com.starshop.repository.ProductRepository;
 import com.starshop.repository.UserRepository;
 import com.starshop.repository.ViewedProductRepository;
+import com.starshop.service.PromotionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -32,7 +33,7 @@ class ViewedProductServiceImplTest {
     private final ProductRepository productRepository = mock(ProductRepository.class);
     private final ViewedProductServiceImpl service = new ViewedProductServiceImpl(
             viewedRepository, mock(ProductImageRepository.class), userRepository, productRepository,
-            Clock.fixed(NOW.atZone(ZONE).toInstant(), ZONE));
+            Clock.fixed(NOW.atZone(ZONE).toInstant(), ZONE), mock(PromotionService.class));
 
     @Test
     void firstView_insertsRecord() {
