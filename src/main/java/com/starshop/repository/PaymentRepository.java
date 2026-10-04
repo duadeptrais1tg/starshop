@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findByTxnRef(String txnRef);
+
+    boolean existsByTxnRef(String txnRef);
 }

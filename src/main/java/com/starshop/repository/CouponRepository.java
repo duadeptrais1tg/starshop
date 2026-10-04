@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,12 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     List<Coupon> findByPromotionId(Long promotionId);
 
     List<Coupon> findByPromotionIdIn(Collection<Long> promotionIds);
+
+    /** Mã đang bật của chương trình đang chạy, áp dụng được cho shop (toàn sàn, theo danh mục, hoặc của chính shop). */
+    @Query("select c from Coupon c join fetch c.promotion p left join p.shop s"
+            + " where c.active = true and p.active = true and p.startAt <= :now and p.endAt >= :now"
+            + " and (p.scope <> com.starshop.entity.enums.PromotionScope.SHOP or s.id = :shopId)")
+    List<Coupon> findUsableForShop(@Param("now") LocalDateTime now, @Param("shopId") Long shopId);
 
     boolean existsByCodeIgnoreCase(String code);
 

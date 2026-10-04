@@ -2,6 +2,8 @@ package com.starshop.service.impl;
 
 import com.starshop.dto.promotion.CartLine;
 import com.starshop.dto.promotion.CouponDiscount;
+import com.starshop.dto.promotion.CouponOption;
+import com.starshop.dto.promotion.OrderAutoDiscount;
 import com.starshop.dto.promotion.PromotionForm;
 import com.starshop.entity.Category;
 import com.starshop.entity.Coupon;
@@ -147,6 +149,51 @@ class PromotionServiceImplTest {
     }
 
     // ======================================================= ghi / trả lượt dùng
+
+    @Test
+    void validateCoupon_doesNotMarkCallerTransactionRollbackOnly() throws Exception {
+        // Checkout bắt lỗi mã để hiện lý do; nếu bị đánh dấu rollback-only thì cả trang lỗi 500
+        var tx = PromotionServiceImpl.class.getMethod("validateCoupon", String.class, Long.class, Long.class,
+                List.class, BigDecimal.class).getAnnotation(org.springframework.transaction.annotation.Transactional.class);
+        assertThat(tx.noRollbackFor()).contains(BusinessException.class);
+    }
+
+    @Test
+    void availableCoupons_listsOnlyUsableCodes_biggestDiscountFirst() {
+        Coupon small = coupon("GIAM5", promotion(PromotionType.PRODUCT_PERCENT, "5", null, "0"), null);
+        Coupon big = coupon("GIAM10", promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0"), null);
+        big.setId(11L);
+        Coupon tooBig = coupon("DON1TR", promotion(PromotionType.PRODUCT_PERCENT, "20", null, "1000000"), null);
+        tooBig.setId(12L);
+        when(couponRepository.findUsableForShop(NOW, 1L)).thenReturn(List.of(small, big, tooBig));
+
+        List<CouponOption> options = service.availableCoupons(5L, 1L, List.of(line(3L, "400000")), money("30000"));
+
+        assertThat(options).extracting(CouponOption::getCode).containsExactly("GIAM10", "GIAM5");
+        assertThat(options.get(0).getDiscount()).isEqualByComparingTo("40000");
+        assertThat(options.get(0).getDescription()).isEqualTo("Giảm 10%");
+        assertThat(small.getId()).isEqualTo(10L);
+    }
+
+    @Test
+    void autoOrderDiscount_appliesBestShippingAndMinOrderPercent_skipsPriceLevelPromotions() {
+        Promotion freeship = promotion(PromotionType.SHIPPING_DISCOUNT, "20000", null, "300000");
+        Promotion bigFreeship = promotion(PromotionType.SHIPPING_DISCOUNT, "50000", null, "300000");
+        bigFreeship.setName("Freeship lớn");
+        Promotion percentMin = promotion(PromotionType.PRODUCT_PERCENT, "10", null, "200000");
+        percentMin.setName("Giảm 10% đơn 200k");
+        // Đã nằm trong đơn giá (autoPricing) -> không tính lần nữa
+        Promotion priceLevel = promotion(PromotionType.PRODUCT_PERCENT, "50", null, "0");
+        Promotion notReached = promotion(PromotionType.PRODUCT_PERCENT, "30", null, "900000");
+        when(promotionRepository.findRunningAutoPromotions(NOW))
+                .thenReturn(List.of(freeship, bigFreeship, percentMin, priceLevel, notReached));
+
+        OrderAutoDiscount d = service.autoOrderDiscount(1L, List.of(line(3L, "400000")), money("30000"));
+
+        assertThat(d.productDiscount()).isEqualByComparingTo("40000");
+        assertThat(d.shippingDiscount()).isEqualByComparingTo("30000");   // không vượt phí ship
+        assertThat(d.promotionNames()).containsExactly("Giảm 10% đơn 200k", "Freeship lớn");
+    }
 
     @Test
     void recordUsage_failsWhenLastUseWasJustTaken() {

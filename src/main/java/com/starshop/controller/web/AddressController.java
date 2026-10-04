@@ -2,6 +2,7 @@ package com.starshop.controller.web;
 
 import com.starshop.dto.account.AddressForm;
 import com.starshop.exception.BusinessException;
+import com.starshop.security.SafeRedirect;
 import com.starshop.security.UserPrincipal;
 import com.starshop.service.AddressService;
 import jakarta.validation.Valid;
@@ -49,21 +50,25 @@ public class AddressController {
         return LIST_VIEW;
     }
 
+    /** redirect (tùy chọn): trang quay lại sau khi thêm, ví dụ từ trang checkout. */
     @GetMapping("/new")
-    public String createForm(Model model) {
+    public String createForm(@RequestParam(required = false) String redirect, Model model) {
         model.addAttribute("form", new AddressForm());
+        model.addAttribute("redirect", SafeRedirect.resolve(redirect, null));
         return FORM_VIEW;
     }
 
     @PostMapping
     public String create(@AuthenticationPrincipal UserPrincipal user,
-                         @Valid @ModelAttribute("form") AddressForm form, BindingResult result, Model model) {
+                         @Valid @ModelAttribute("form") AddressForm form, BindingResult result,
+                         @RequestParam(required = false) String redirect, Model model) {
+        model.addAttribute("redirect", SafeRedirect.resolve(redirect, null));
         if (result.hasErrors()) {
             return FORM_VIEW;
         }
         try {
             addressService.create(user.getId(), form);
-            return "redirect:/user/addresses?msg=created";
+            return "redirect:" + SafeRedirect.resolve(redirect, "/user/addresses?msg=created");
         } catch (BusinessException e) {
             model.addAttribute("error", e.getMessage());
             return FORM_VIEW;

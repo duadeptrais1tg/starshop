@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -38,6 +39,16 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             + " coalesce(sum(p.reviewCount), 0) as reviewCount, coalesce(sum(p.ratingAvg * p.reviewCount), 0) as ratingSum"
             + " from Product p where p.shop.id = :shopId and p.active = true and p.category.active = true")
     ShopStats shopStats(@Param("shopId") Long shopId);
+
+    /**
+     * Trừ tồn kho khi đặt hàng, chỉ khi còn đủ (1 câu UPDATE có điều kiện -> tồn kho không bao giờ âm,
+     * kể cả khi nhiều người mua cùng lúc).
+     *
+     * @return 1 nếu trừ được, 0 nếu không đủ hàng
+     */
+    @Modifying
+    @Query("update Product p set p.stock = p.stock - :qty where p.id = :id and p.stock >= :qty")
+    int decreaseStock(@Param("id") Long id, @Param("qty") int qty);
 
     interface ShopStats {
         long getProductCount();

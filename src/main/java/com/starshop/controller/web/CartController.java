@@ -28,7 +28,8 @@ public class CartController {
     private static final Map<String, String> MESSAGES = Map.of(
             "added", "Đã thêm vào giỏ hàng.",
             "removed", "Đã xóa sản phẩm khỏi giỏ.",
-            "addFailed", "Không thêm được sản phẩm: sản phẩm đã ngừng bán, hết hàng hoặc vượt số lượng còn lại.");
+            "addFailed", "Không thêm được sản phẩm: sản phẩm đã ngừng bán, hết hàng hoặc vượt số lượng còn lại.",
+            "noSelection", "Vui lòng chọn sản phẩm trong giỏ để đặt hàng.");
 
     private final CartService cartService;
 
@@ -38,7 +39,8 @@ public class CartController {
                        Model model) {
         model.addAttribute("cart", cartService.getCart(user.getId()));
         if (msg != null && MESSAGES.containsKey(msg)) {
-            model.addAttribute("addFailed".equals(msg) ? "error" : "message", MESSAGES.get(msg));
+            boolean isError = "addFailed".equals(msg) || "noSelection".equals(msg);
+            model.addAttribute(isError ? "error" : "message", MESSAGES.get(msg));
         }
         return "web/cart/cart";
     }

@@ -34,4 +34,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long>, Jpa
             + " and p.type = com.starshop.entity.enums.PromotionType.PRODUCT_PERCENT and p.minOrderValue = 0"
             + " and not exists (select c from Coupon c where c.promotion = p)")
     List<Promotion> findRunningAutoProductPromotions(@Param("now") LocalDateTime now);
+
+    /** Chương trình TỰ ÁP DỤNG (không có mã) đang chạy, mọi loại. */
+    @Query("select p from Promotion p where p.active = true and p.startAt <= :now and p.endAt >= :now"
+            + " and not exists (select c from Coupon c where c.promotion = p)")
+    List<Promotion> findRunningAutoPromotions(@Param("now") LocalDateTime now);
 }

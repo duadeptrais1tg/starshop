@@ -5,15 +5,23 @@ import com.starshop.entity.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByCode(String code);
+
+    boolean existsByCode(String code);
+
+    /** Các đơn tạo trong một lần thanh toán của user (trang đặt hàng thành công). */
+    @EntityGraph(attributePaths = {"shop", "items"})
+    List<Order> findByPaymentTxnRefAndUserIdOrderByIdAsc(String txnRef, Long userId);
 
     boolean existsByCarrierId(Long carrierId);
 

@@ -4,6 +4,8 @@ import com.starshop.dto.OptionDto;
 import com.starshop.dto.promotion.AutoPricing;
 import com.starshop.dto.promotion.CartLine;
 import com.starshop.dto.promotion.CouponDiscount;
+import com.starshop.dto.promotion.CouponOption;
+import com.starshop.dto.promotion.OrderAutoDiscount;
 import com.starshop.dto.promotion.PromotionDto;
 import com.starshop.dto.promotion.PromotionForm;
 import com.starshop.dto.promotion.PromotionStatus;
@@ -224,7 +226,9 @@ public class PromotionServiceImpl implements PromotionService {
     // ======================================================================= Dùng cho đặt hàng
 
     @Override
-    @Transactional(readOnly = true)
+    // Mã không dùng được là kết quả kiểm tra bình thường: không đánh dấu rollback transaction của bên gọi
+    // (trang checkout bắt lỗi để hiện lý do rồi vẫn tiếp tục tính tiền)
+    @Transactional(readOnly = true, noRollbackFor = BusinessException.class)
     public CouponDiscount validateCoupon(String code, Long userId, Long shopId, List<CartLine> lines, BigDecimal shippingFee) {
         String normalized = normalizeCode(code);
         if (normalized == null) {
@@ -250,36 +254,9 @@ public class PromotionServiceImpl implements PromotionService {
         if (userId != null && couponUsageRepository.countByCouponIdAndUserId(coupon.getId(), userId) >= coupon.getPerUserLimit()) {
             throw new BusinessException("Bạn đã dùng mã này tối đa " + coupon.getPerUserLimit() + " lần.");
         }
-        if (p.getScope() == PromotionScope.SHOP && (p.getShop() == null || !Objects.equals(p.getShop().getId(), shopId))) {
-            throw new BusinessException("Mã giảm giá không áp dụng cho shop này.");
-        }
-
-        // Số tiền được xét: cả đơn, hoặc chỉ các sản phẩm thuộc danh mục của chương trình
-        BigDecimal base = BigDecimal.ZERO;
-        Map<Long, Long> parents = p.getScope() == PromotionScope.CATEGORY ? categoryParents() : Map.of();
-        for (CartLine line : lines) {
-            if (p.getScope() != PromotionScope.CATEGORY
-                    || isInCategory(line.categoryId(), p.getCategory().getId(), parents)) {
-                base = base.add(line.lineTotal());
-            }
-        }
-        if (base.signum() == 0) {
-            throw new BusinessException("Đơn hàng không có sản phẩm thuộc danh mục \"" + p.getCategory().getName() + "\".");
-        }
-        if (base.compareTo(p.getMinOrderValue()) < 0) {
-            throw new BusinessException("Đơn tối thiểu " + money(p.getMinOrderValue()) + "₫ để dùng mã này.");
-        }
-
-        BigDecimal productDiscount = BigDecimal.ZERO;
-        BigDecimal shippingDiscount = BigDecimal.ZERO;
-        if (p.getType() == PromotionType.PRODUCT_PERCENT) {
-            productDiscount = cap(base.multiply(p.getDiscountValue()).divide(HUNDRED, 0, RoundingMode.HALF_UP), p.getMaxDiscount())
-                    .min(base);
-        } else {
-            BigDecimal fee = shippingFee == null ? BigDecimal.ZERO : shippingFee;
-            shippingDiscount = cap(p.getDiscountValue().min(fee), p.getMaxDiscount());
-        }
-        return new CouponDiscount(coupon.getId(), coupon.getCode(), p.getName(), p.getType(), productDiscount, shippingDiscount);
+        Amounts amounts = evaluate(p, shopId, lines, shippingFee);
+        return new CouponDiscount(coupon.getId(), coupon.getCode(), p.getName(), p.getType(),
+                amounts.product(), amounts.shipping());
     }
 
     @Override
@@ -303,6 +280,78 @@ public class PromotionServiceImpl implements PromotionService {
             couponRepository.decrementUsage(usage.getCoupon().getId());
             couponUsageRepository.delete(usage);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CouponOption> availableCoupons(Long userId, Long shopId, List<CartLine> lines, BigDecimal shippingFee) {
+        List<CouponOption> options = new ArrayList<>();
+        for (Coupon coupon : couponRepository.findUsableForShop(now(), shopId)) {
+            try {
+                CouponDiscount d = validateCoupon(coupon.getCode(), userId, shopId, lines, shippingFee);
+                Promotion p = coupon.getPromotion();
+                options.add(new CouponOption(d.code(), p.getName(), p.getType(), p.getScope(), d.total(),
+                        describe(p), p.getEndAt() == null ? null : DateFormats.dateTime(p.getEndAt())));
+            } catch (BusinessException e) {
+                // Mã không dùng được cho đơn này (chưa đủ đơn tối thiểu, đã dùng hết lượt...): không liệt kê
+            }
+        }
+        options.sort((a, b) -> b.getDiscount().compareTo(a.getDiscount()));
+        return options;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderAutoDiscount autoOrderDiscount(Long shopId, List<CartLine> lines, BigDecimal shippingFee) {
+        Promotion bestProduct = null;
+        Promotion bestShipping = null;
+        BigDecimal productDiscount = BigDecimal.ZERO;
+        BigDecimal shippingDiscount = BigDecimal.ZERO;
+        for (Promotion p : promotionRepository.findRunningAutoPromotions(now())) {
+            // Giảm % không có đơn tối thiểu đã nằm sẵn trong đơn giá (autoPricing), không tính lại
+            if (p.getType() == PromotionType.PRODUCT_PERCENT && p.getMinOrderValue().signum() == 0) {
+                continue;
+            }
+            Amounts amounts;
+            try {
+                amounts = evaluate(p, shopId, lines, shippingFee);
+            } catch (BusinessException e) {
+                continue;
+            }
+            if (amounts.product().compareTo(productDiscount) > 0) {
+                productDiscount = amounts.product();
+                bestProduct = p;
+            }
+            if (amounts.shipping().compareTo(shippingDiscount) > 0) {
+                shippingDiscount = amounts.shipping();
+                bestShipping = p;
+            }
+        }
+        List<String> names = new ArrayList<>();
+        if (bestProduct != null) {
+            names.add(bestProduct.getName());
+        }
+        if (bestShipping != null) {
+            names.add(bestShipping.getName());
+        }
+        return new OrderAutoDiscount(productDiscount, shippingDiscount, names);
+    }
+
+    /** Mô tả ngắn cho khách, ví dụ "Giảm 10%, tối đa 50.000₫ – đơn từ 200.000₫". */
+    private static String describe(Promotion p) {
+        StringBuilder text = new StringBuilder();
+        if (p.getType() == PromotionType.PRODUCT_PERCENT) {
+            text.append("Giảm ").append(p.getDiscountValue().stripTrailingZeros().toPlainString()).append("%");
+            if (p.getMaxDiscount() != null) {
+                text.append(", tối đa ").append(money(p.getMaxDiscount())).append("₫");
+            }
+        } else {
+            text.append("Giảm ").append(money(p.getDiscountValue())).append("₫ phí vận chuyển");
+        }
+        if (p.getMinOrderValue().signum() > 0) {
+            text.append(" – đơn từ ").append(money(p.getMinOrderValue())).append("₫");
+        }
+        return text.toString();
     }
 
     // ======================================================================= Hiển thị giá
@@ -456,6 +505,48 @@ public class PromotionServiceImpl implements PromotionService {
                 .usedCount(coupon == null ? 0 : coupon.getUsedCount())
                 .locked(isLocked)
                 .build();
+    }
+
+    /** Số tiền giảm trên tiền hàng / phí ship của một chương trình cho đơn của một shop. */
+    private record Amounts(BigDecimal product, BigDecimal shipping) {
+    }
+
+    /**
+     * Tính tiền giảm của chương trình cho đơn (đúng phạm vi, đủ đơn tối thiểu).
+     *
+     * @throws BusinessException không áp dụng được (message nêu lý do)
+     */
+    private Amounts evaluate(Promotion p, Long shopId, List<CartLine> lines, BigDecimal shippingFee) {
+        if (p.getScope() == PromotionScope.SHOP && (p.getShop() == null || !Objects.equals(p.getShop().getId(), shopId))) {
+            throw new BusinessException("Mã giảm giá không áp dụng cho shop này.");
+        }
+
+        // Số tiền được xét: cả đơn, hoặc chỉ các sản phẩm thuộc danh mục của chương trình
+        BigDecimal base = BigDecimal.ZERO;
+        Map<Long, Long> parents = p.getScope() == PromotionScope.CATEGORY ? categoryParents() : Map.of();
+        for (CartLine line : lines) {
+            if (p.getScope() != PromotionScope.CATEGORY
+                    || isInCategory(line.categoryId(), p.getCategory().getId(), parents)) {
+                base = base.add(line.lineTotal());
+            }
+        }
+        if (base.signum() == 0) {
+            throw new BusinessException("Đơn hàng không có sản phẩm thuộc danh mục \"" + p.getCategory().getName() + "\".");
+        }
+        if (base.compareTo(p.getMinOrderValue()) < 0) {
+            throw new BusinessException("Đơn tối thiểu " + money(p.getMinOrderValue()) + "₫ để dùng mã này.");
+        }
+
+        BigDecimal productDiscount = BigDecimal.ZERO;
+        BigDecimal shippingDiscount = BigDecimal.ZERO;
+        if (p.getType() == PromotionType.PRODUCT_PERCENT) {
+            productDiscount = cap(base.multiply(p.getDiscountValue()).divide(HUNDRED, 0, RoundingMode.HALF_UP), p.getMaxDiscount())
+                    .min(base);
+        } else {
+            BigDecimal fee = shippingFee == null ? BigDecimal.ZERO : shippingFee;
+            shippingDiscount = cap(p.getDiscountValue().min(fee), p.getMaxDiscount());
+        }
+        return new Amounts(productDiscount, shippingDiscount);
     }
 
     private Map<Long, Long> categoryParents() {

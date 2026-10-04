@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" session="false" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -16,6 +17,7 @@
         <c:set var="formAction" value="/user/addresses${empty addressId ? '' : '/'}${addressId}"/>
         <form:form modelAttribute="form" method="post" action="${pageContext.request.contextPath}${formAction}"
                    cssClass="card" novalidate="novalidate">
+            <c:if test="${not empty redirect}"><input type="hidden" name="redirect" value="<c:out value='${redirect}'/>"></c:if>
             <div class="card-header"><h3 class="card-title">${empty addressId ? 'Thêm địa chỉ nhận hàng' : 'Sửa địa chỉ nhận hàng'}</h3></div>
             <div class="card-body">
                 <div class="row g-3">
@@ -64,7 +66,7 @@
                 </div>
             </div>
             <div class="card-footer text-end">
-                <a href="<c:url value='/user/addresses'/>" class="btn me-2">Hủy</a>
+                <a href="${empty redirect ? pageContext.request.contextPath.concat('/user/addresses') : fn:escapeXml(redirect)}" class="btn me-2">Hủy</a>
                 <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Lưu địa chỉ</button>
             </div>
         </form:form>

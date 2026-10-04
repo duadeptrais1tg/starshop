@@ -51,3 +51,18 @@ Lưu ý cho A8:
 - Gọi lại `validateCoupon` ngay trong transaction tạo đơn (không tin kết quả lúc khách bấm "Áp dụng" vì có thể đã hết lượt).
 - Lưu `order.coupon`, `order.productDiscount`, `order.shippingDiscount` theo kết quả trả về.
 - Mỗi đơn (mỗi shop) dùng tối đa 1 mã.
+
+## 4. Trang checkout (đã làm ở A8)
+
+```java
+// Danh sách mã dùng được cho đơn của một shop (mã của shop + theo danh mục + toàn sàn), giảm nhiều nhất trước
+List<CouponOption> options = promotionService.availableCoupons(userId, shopId, lines, shippingFee);
+
+// Khuyến mãi tự áp dụng cấp đơn (không cần mã): giảm % có đơn tối thiểu, giảm phí vận chuyển
+OrderAutoDiscount auto = promotionService.autoOrderDiscount(shopId, lines, shippingFee);
+```
+
+- Một đơn có thể vừa được khuyến mãi tự áp dụng vừa dùng mã: tổng giảm tiền hàng không vượt tiền hàng,
+  tổng giảm phí ship không vượt phí ship. `order.productDiscount` / `order.shippingDiscount` lưu tổng sau khi giới hạn.
+- `validateCoupon` không đánh dấu rollback transaction của bên gọi khi mã không hợp lệ (`noRollbackFor`),
+  nên có thể gọi trong transaction và bắt `BusinessException` để hiện lý do.

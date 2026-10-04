@@ -4,6 +4,8 @@ import com.starshop.dto.OptionDto;
 import com.starshop.dto.promotion.AutoPricing;
 import com.starshop.dto.promotion.CartLine;
 import com.starshop.dto.promotion.CouponDiscount;
+import com.starshop.dto.promotion.CouponOption;
+import com.starshop.dto.promotion.OrderAutoDiscount;
 import com.starshop.dto.promotion.PromotionDto;
 import com.starshop.dto.promotion.PromotionForm;
 import com.starshop.dto.promotion.PromotionStatus;
@@ -72,6 +74,18 @@ public interface PromotionService {
 
     /** Trả lại lượt dùng mã của đơn (hủy đơn / thanh toán thất bại). Không có thì bỏ qua. */
     void releaseUsage(Long orderId);
+
+    /**
+     * Các mã khách dùng được cho đơn của một shop (mã của shop, theo danh mục và toàn sàn), giảm nhiều nhất trước.
+     * Mã chưa đủ điều kiện (đơn tối thiểu, hết lượt, đã dùng hết số lần...) không được liệt kê.
+     */
+    List<CouponOption> availableCoupons(Long userId, Long shopId, List<CartLine> lines, BigDecimal shippingFee);
+
+    /**
+     * Khuyến mãi tự áp dụng ở cấp đơn: giảm % có đơn tối thiểu và giảm phí vận chuyển (không cần mã).
+     * Giảm % không có đơn tối thiểu đã nằm trong đơn giá ({@link #autoPricing()}) nên không tính ở đây.
+     */
+    OrderAutoDiscount autoOrderDiscount(Long shopId, List<CartLine> lines, BigDecimal shippingFee);
 
     // ======================================================================= Hiển thị giá
 
