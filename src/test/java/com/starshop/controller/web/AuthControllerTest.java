@@ -10,6 +10,7 @@ import com.starshop.security.JwtAuthFilter;
 import com.starshop.security.JwtService;
 import com.starshop.security.LoginRedirectEntryPoint;
 import com.starshop.security.UserPrincipal;
+import com.starshop.service.CartService;
 import com.starshop.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,8 @@ import static com.starshop.security.TestUsers.principal;
 import static com.starshop.security.TestUsers.user;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -53,6 +56,10 @@ class AuthControllerTest {
     @MockitoBean
     private CustomUserDetailsService userDetailsService;
 
+    /** CurrentUserAdvice cần để đếm giỏ hàng trên header. */
+    @MockitoBean
+    private CartService cartService;
+
     @Test
     void login_success_setsHttpOnlyCookie_andGoesToRoleHome() throws Exception {
         givenLogin(principal(2L, "admin@starshop.vn", RoleName.ADMIN));
@@ -60,7 +67,8 @@ class AuthControllerTest {
         mvc.perform(post("/auth/login").with(csrf()).param("email", "admin@starshop.vn").param("password", "Starshop@123"))
                 .andExpect(redirectedUrl("/admin"))
                 .andExpect(header().string("Set-Cookie", allOf(
-                        containsString("ACCESS_TOKEN=token-123"), containsString("HttpOnly"), containsString("SameSite=Lax"))));
+                        containsString("ACCESS_TOKEN=token-123"), containsString("HttpOnly"), containsString("SameSite=Lax"))))
+                .andExpect(header().stringValues("Set-Cookie", hasItem(allOf(startsWith("XSRF-TOKEN=;"), containsString("Max-Age=0")))));
     }
 
     @Test

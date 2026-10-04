@@ -87,7 +87,79 @@
             + '</div></div></div></div>';
     }
 
+    /** Thông báo nhỏ góc màn hình (type: success | danger). */
+    function toast(message, type) {
+        var box = document.getElementById('ss-toasts');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'ss-toasts';
+            box.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            box.style.zIndex = 1080;
+            document.body.appendChild(box);
+        }
+        var el = document.createElement('div');
+        el.className = 'alert alert-' + (type || 'success') + ' shadow mb-2';
+        el.setAttribute('role', 'status');
+        el.textContent = message;
+        box.appendChild(el);
+        setTimeout(function () { el.remove(); }, 3000);
+    }
+
+    /** Cập nhật số trên biểu tượng giỏ hàng ở header. */
+    function setCartCount(count) {
+        var badge = document.getElementById('cart-count');
+        if (!badge) {
+            return;
+        }
+        badge.textContent = count;
+        badge.classList.toggle('d-none', !(count > 0));
+    }
+
+    /** Chưa đăng nhập (API trả 401) -> sang trang đăng nhập, xong quay lại trang hiện tại. */
+    function goLogin() {
+        window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+    }
+
+    /**
+     * Gửi POST dạng form tới API (kèm CSRF), trả về Promise JSON. Lỗi nghiệp vụ -> reject với message.
+     */
+    function postForm(url, params) {
+        return fetch(url, {
+            method: 'POST',
+            headers: csrfHeaders({'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'}),
+            body: new URLSearchParams(params)
+        }).then(function (res) {
+            if (res.status === 401) {
+                goLogin();
+                return Promise.reject(null);
+            }
+            return res.json().then(function (data) {
+                return res.ok ? data : Promise.reject(data.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+            });
+        });
+    }
+
+    /** Thêm vào giỏ bằng AJAX, cập nhật badge và báo kết quả. */
+    function addToCart(productId, quantity) {
+        return postForm('/api/cart/items', {productId: productId, quantity: quantity || 1})
+            .then(function (data) {
+                setCartCount(data.cartCount);
+                toast(data.message, 'success');
+                return data;
+            })
+            .catch(function (message) {
+                if (message) {
+                    toast(message, 'danger');
+                }
+                return Promise.reject(message);
+            });
+    }
+
     window.StarShop = window.StarShop || {};
+    window.StarShop.toast = toast;
+    window.StarShop.setCartCount = setCartCount;
+    window.StarShop.postForm = postForm;
+    window.StarShop.addToCart = addToCart;
     window.StarShop.csrfHeaders = csrfHeaders;
     window.StarShop.escapeHtml = escapeHtml;
     window.StarShop.renderProductCard = renderProductCard;

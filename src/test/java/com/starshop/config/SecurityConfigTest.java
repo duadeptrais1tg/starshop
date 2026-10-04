@@ -11,6 +11,7 @@ import com.starshop.security.JwtAuthFilter;
 import com.starshop.security.JwtService;
 import com.starshop.security.LoginRedirectEntryPoint;
 import com.starshop.security.UserPrincipal;
+import com.starshop.service.CartService;
 import com.starshop.service.AdminDashboardService;
 import com.starshop.service.ProductCatalogService;
 import jakarta.servlet.http.Cookie;
@@ -56,6 +57,10 @@ class SecurityConfigTest {
 
     @MockitoBean
     private CustomUserDetailsService userDetailsService;
+
+    /** CurrentUserAdvice cần để đếm giỏ hàng trên header. */
+    @MockitoBean
+    private CartService cartService;
 
     /** AdminDashboardController cần service này; test chỉ kiểm tra phân quyền nên dùng mock. */
     @MockitoBean
@@ -159,7 +164,24 @@ class SecurityConfigTest {
         mvc.perform(post("/admin").cookie(adminCookie).with(csrf())).andExpect(status().isMethodNotAllowed());
     }
 
+    @Test
+    void csrfCookie_survivesAuthenticatedPost_soAjaxCanCallAgain() throws Exception {
+        // Double-submit: cookie XSRF-TOKEN + header X-XSRF-TOKEN cùng giá trị
+        Cookie xsrf = new Cookie("XSRF-TOKEN", "token-abc");
+        mvc.perform(post("/admin").cookie(adminCookie, xsrf).header("X-XSRF-TOKEN", masked("token-abc")))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().doesNotExist("Set-Cookie"));
+    }
+
     // --------------------------------------------------------------- helpers
+
+    /** Token dạng "đã mask" như trong meta _csrf của trang (XorCsrfTokenRequestAttributeHandler), mask toàn 0. */
+    private static String masked(String token) {
+        byte[] raw = token.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] combined = new byte[raw.length * 2];
+        System.arraycopy(raw, 0, combined, raw.length, raw.length);
+        return java.util.Base64.getUrlEncoder().encodeToString(combined);
+    }
 
     private Cookie login(User user) {
         when(userDetailsService.loadUserByUsername(user.getEmail()))

@@ -99,8 +99,8 @@
 
                 <c:choose>
                     <c:when test="${product.inStock}">
-                        <%-- Giỏ hàng làm ở chức năng giỏ hàng: POST /cart/items (yêu cầu đăng nhập) --%>
-                        <form method="post" action="<c:url value='/cart/items'/>" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <%-- Thêm vào giỏ bằng AJAX (xem script cuối trang); form POST /cart/items là dự phòng khi tắt JavaScript --%>
+                        <form method="post" action="<c:url value='/cart/items'/>" id="add-to-cart-form" class="d-flex flex-wrap align-items-center gap-2 mb-2">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <input type="hidden" name="productId" value="${product.id}">
                             <div class="input-group ss-qty" style="width:150px">
@@ -216,6 +216,18 @@
                 thumb.classList.add('active');
             });
         });
+        // Thêm vào giỏ bằng AJAX: cập nhật badge header, không tải lại trang
+        var cartForm = document.getElementById('add-to-cart-form');
+        if (cartForm) {
+            cartForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = cartForm.querySelector('button[type=submit]');
+                btn.disabled = true;
+                StarShop.addToCart(cartForm.productId.value, cartForm.quantity.value)
+                    .catch(function () { })
+                    .then(function () { btn.disabled = false; });
+            });
+        }
         // Nút +/- số lượng (server vẫn kiểm tra lại tồn kho khi thêm giỏ)
         var qty = document.getElementById('qty');
         document.querySelectorAll('[data-qty-step]').forEach(function (btn) {

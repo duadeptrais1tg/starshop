@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -30,6 +31,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class AuthController {
 
     private static final String LOGIN_VIEW = "auth/login";
+
+    /** Đổi token CSRF khi đăng nhập / đăng xuất (trang kế tiếp tự sinh token mới), tránh dùng lại token cũ. */
+    private static final ResponseCookie CLEAR_CSRF_COOKIE =
+            ResponseCookie.from("XSRF-TOKEN", "").path("/").maxAge(0).httpOnly(true).build();
 
     private final AuthService authService;
     private final JwtService jwtService;
@@ -65,6 +70,7 @@ public class AuthController {
         try {
             AuthService.LoginResult login = authService.login(form.getEmail(), form.getPassword());
             response.addHeader(HttpHeaders.SET_COOKIE, jwtService.createAccessTokenCookie(login.token()).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, CLEAR_CSRF_COOKIE.toString());
             return "redirect:" + SafeRedirect.resolve(form.getRedirect(), login.user().getHomePath());
         } catch (AccountNotActivatedException e) {
             model.addAttribute("error", e.getMessage());
@@ -80,6 +86,7 @@ public class AuthController {
     @PostMapping("/logout")
     public String logout(HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE, jwtService.clearAccessTokenCookie().toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, CLEAR_CSRF_COOKIE.toString());
         return "redirect:/auth/login?logout";
     }
 }

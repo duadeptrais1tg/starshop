@@ -23,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 
@@ -61,6 +62,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(new CookieCsrfTokenRepository())
+                        // JWT xác thực lại mỗi request: không coi đó là "đăng nhập mới", nếu không Spring xóa
+                        // cookie CSRF sau mỗi POST và lần gọi AJAX thứ hai trên cùng trang bị 403
+                        .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())
                         .ignoringRequestMatchers(PAYMENT_CALLBACKS))
                 // Tự viết trang /auth/login, /auth/logout (chức năng đăng nhập) nên tắt form mặc định
                 .formLogin(AbstractHttpConfigurer::disable)

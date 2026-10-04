@@ -15,7 +15,7 @@
             <div class="nav-item">
                 <a href="<c:url value='/cart'/>" class="nav-link px-2" title="Giỏ hàng">
                     <i class="ti ti-shopping-cart fs-2"></i>
-                    <span class="badge bg-primary text-white badge-count d-none" id="cart-count">0</span>
+                    <span class="badge bg-primary text-white badge-count ${cartCount > 0 ? '' : 'd-none'}" id="cart-count">${cartCount > 0 ? cartCount : 0}</span>
                 </a>
             </div>
             <%-- Khu vực tài khoản: currentUser do CurrentUserAdvice đưa vào (null = khách) --%>
