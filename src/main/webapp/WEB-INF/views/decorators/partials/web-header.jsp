@@ -46,6 +46,9 @@
                             <a href="<c:url value='/user/orders'/>" class="dropdown-item"><i class="ti ti-package me-2"></i>Đơn hàng</a>
                             <a href="<c:url value='/user/favorites'/>" class="dropdown-item"><i class="ti ti-heart me-2"></i>Yêu thích</a>
                             <a href="<c:url value='/user/viewed'/>" class="dropdown-item"><i class="ti ti-eye me-2"></i>Đã xem</a>
+                            <c:if test="${not currentUser.vendor}">
+                                <a href="<c:url value='/user/shop'/>" class="dropdown-item"><i class="ti ti-building-store me-2"></i>Mở shop</a>
+                            </c:if>
                             <c:if test="${currentUser.admin or currentUser.manager or currentUser.vendor or currentUser.shipper}">
                                 <div class="dropdown-divider"></div>
                                 <c:if test="${currentUser.admin}">

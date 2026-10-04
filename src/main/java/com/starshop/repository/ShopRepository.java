@@ -8,6 +8,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,6 +23,12 @@ public interface ShopRepository extends JpaRepository<Shop, Long>, JpaSpecificat
     Optional<Shop> findByOwnerId(Long ownerId);
 
     boolean existsByName(String name);
+
+    /** Tên shop trùng (không phân biệt hoa thường), bỏ qua chính shop đang sửa (excludeId null = shop mới). */
+    @Query("select count(s) > 0 from Shop s where lower(s.name) = lower(:name) and (:excludeId is null or s.id <> :excludeId)")
+    boolean existsNameForOtherShop(@Param("name") String name, @Param("excludeId") Long excludeId);
+
+    boolean existsBySlug(String slug);
 
     long countByStatus(ShopStatus status);
 

@@ -17,5 +17,8 @@
         <a href="<c:url value='/user/viewed'/>" class="list-group-item list-group-item-action" data-ss-nav>
             <i class="ti ti-eye me-2"></i>Đã xem
         </a>
+        <a href="<c:url value='/user/shop'/>" class="list-group-item list-group-item-action" data-ss-nav>
+            <i class="ti ti-building-store me-2"></i>${currentUser.vendor ? 'Shop của tôi' : 'Mở shop'}
+        </a>
     </div>
 </div>

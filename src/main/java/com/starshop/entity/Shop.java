@@ -48,8 +48,15 @@ public class Shop extends BaseEntity {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    /** public_id trên Cloudinary, để xóa ảnh cũ khi đổi logo. */
+    @Column(name = "logo_public_id")
+    private String logoPublicId;
+
     @Column(name = "banner_url")
     private String bannerUrl;
+
+    @Column(name = "banner_public_id")
+    private String bannerPublicId;
 
     @Column(name = "pickup_address", nullable = false)
     private String pickupAddress;
