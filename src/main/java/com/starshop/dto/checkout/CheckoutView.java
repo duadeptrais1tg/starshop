@@ -23,6 +23,8 @@ public class CheckoutView {
     private final List<CarrierDto> carriers;
     private final Long carrierId;
     private final List<PaymentMethod> paymentMethods;
+    /** Phương thức đang dùng được (VNPAY chỉ bật khi đã cấu hình). */
+    private final List<PaymentMethod> enabledPaymentMethods;
     private final PaymentMethod paymentMethod;
     private final List<CheckoutGroup> groups;
     /** Lỗi chặn đặt hàng (chưa có địa chỉ, sản phẩm hết hàng, mã không hợp lệ...). */

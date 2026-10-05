@@ -5,7 +5,9 @@ import com.starshop.entity.enums.PaymentMethod;
 import com.starshop.exception.BusinessException;
 import com.starshop.security.UserPrincipal;
 import com.starshop.service.CheckoutService;
+import com.starshop.service.PaymentService;
 import com.starshop.util.EnumParams;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -32,6 +34,7 @@ public class CheckoutController {
     private static final String NOTE_PREFIX = "note_";
 
     private final CheckoutService checkoutService;
+    private final PaymentService paymentService;
 
     @GetMapping
     public String checkout(@AuthenticationPrincipal UserPrincipal user,
@@ -41,10 +44,14 @@ public class CheckoutController {
 
     @PostMapping
     public String placeOrder(@AuthenticationPrincipal UserPrincipal user,
-                             @RequestParam Map<String, String> params, Model model) {
+                             @RequestParam Map<String, String> params, HttpServletRequest httpRequest, Model model) {
         CheckoutRequest request = toRequest(params);
         try {
             String txnRef = checkoutService.placeOrder(user.getId(), request);
+            if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
+                // Đơn đã tạo (giữ hàng); chuyển khách sang VNPAY, kết quả về /payment/vnpay/return
+                return "redirect:" + paymentService.createVnpayUrl(user.getId(), txnRef, httpRequest.getRemoteAddr());
+            }
             return "redirect:/checkout/success?ref=" + txnRef;
         } catch (BusinessException e) {
             model.addAttribute("placeError", e.getMessage());

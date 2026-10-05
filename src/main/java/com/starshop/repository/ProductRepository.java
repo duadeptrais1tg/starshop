@@ -50,6 +50,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("update Product p set p.stock = p.stock - :qty where p.id = :id and p.stock >= :qty")
     int decreaseStock(@Param("id") Long id, @Param("qty") int qty);
 
+    /** Hoàn lại tồn kho khi đơn bị hủy / thanh toán thất bại. */
+    @Modifying
+    @Query("update Product p set p.stock = p.stock + :qty where p.id = :id")
+    int increaseStock(@Param("id") Long id, @Param("qty") int qty);
+
     interface ShopStats {
         long getProductCount();
 

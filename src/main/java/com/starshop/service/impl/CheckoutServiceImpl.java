@@ -41,6 +41,7 @@ import com.starshop.service.AddressService;
 import com.starshop.service.CheckoutService;
 import com.starshop.service.CommissionService;
 import com.starshop.service.PromotionService;
+import com.starshop.service.VnpayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,8 +67,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CheckoutServiceImpl implements CheckoutService {
 
-    /** Phương thức đang hỗ trợ; VNPAY / MoMo làm ở chức năng thanh toán online. */
-    static final Set<PaymentMethod> SUPPORTED_METHODS = Set.of(PaymentMethod.COD);
     private static final int MAX_NOTE_LENGTH = 500;
     private static final DateTimeFormatter CODE_DATE = DateTimeFormatter.ofPattern("yyMMdd");
     private static final DateTimeFormatter TXN_TIME = DateTimeFormatter.ofPattern("yyMMddHHmmss");
@@ -86,6 +85,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final AddressService addressService;
     private final PromotionService promotionService;
     private final CommissionService commissionService;
+    private final VnpayService vnpayService;
     private final Clock clock;
 
     @Override
@@ -99,6 +99,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .carriers(draft.carriers.stream().map(CheckoutServiceImpl::toCarrierDto).toList())
                 .carrierId(draft.carrier == null ? null : draft.carrier.getId())
                 .paymentMethods(List.of(PaymentMethod.values()))
+                .enabledPaymentMethods(enabledMethods())
                 .paymentMethod(draft.paymentMethod)
                 .groups(draft.groups.stream().map(g -> g.view).toList())
                 .errors(draft.errors)
@@ -198,7 +199,12 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new NotFoundException("Không tìm thấy đơn hàng");
         }
         Order first = orders.get(0);
+        Payment payment = first.getPayment();
         return OrderSuccessView.builder()
+                .txnRef(txnRef)
+                .paymentMethod(first.getPaymentMethod())
+                .paymentStatus(payment == null ? null : payment.getStatus())
+                .cancelReason(first.getCancelReason())
                 .orders(orders.stream().map(o -> PlacedOrderDto.builder()
                         .code(o.getCode())
                         .shopName(o.getShop().getName())
@@ -271,7 +277,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         BigDecimal shippingFee = draft.carrier == null ? BigDecimal.ZERO : draft.carrier.getShippingFee();
 
         draft.paymentMethod = request.getPaymentMethod() == null ? PaymentMethod.COD : request.getPaymentMethod();
-        if (!SUPPORTED_METHODS.contains(draft.paymentMethod)) {
+        if (!enabledMethods().contains(draft.paymentMethod)) {
             draft.errors.add("Phương thức \"" + draft.paymentMethod.getLabel() + "\" sẽ sớm được hỗ trợ, vui lòng chọn thanh toán khi nhận hàng.");
         }
 
@@ -374,6 +380,11 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /** COD luôn có; VNPAY khi đã cấu hình tmnCode / hashSecret. */
+    private List<PaymentMethod> enabledMethods() {
+        return vnpayService.isEnabled() ? List.of(PaymentMethod.COD, PaymentMethod.VNPAY) : List.of(PaymentMethod.COD);
+    }
 
     private static CarrierDto toCarrierDto(Carrier c) {
         return CarrierDto.builder().id(c.getId()).name(c.getName()).shippingFee(c.getShippingFee()).active(c.isActive()).build();

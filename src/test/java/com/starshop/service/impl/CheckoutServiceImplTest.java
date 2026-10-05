@@ -33,6 +33,7 @@ import com.starshop.repository.UserRepository;
 import com.starshop.service.AddressService;
 import com.starshop.service.CommissionService;
 import com.starshop.service.PromotionService;
+import com.starshop.service.VnpayService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -75,10 +76,11 @@ class CheckoutServiceImplTest {
     private final PaymentRepository paymentRepository = mock(PaymentRepository.class);
     private final PromotionService promotionService = mock(PromotionService.class);
     private final CommissionService commissionService = mock(CommissionService.class);
+    private final VnpayService vnpayService = mock(VnpayService.class);
     private final CheckoutServiceImpl service = new CheckoutServiceImpl(cartItemRepository, productRepository,
             mock(ProductImageRepository.class), addressRepository, carrierRepository, mock(CouponRepository.class),
             orderRepository, historyRepository, paymentRepository, mock(UserRepository.class), mock(AddressService.class),
-            promotionService, commissionService,
+            promotionService, commissionService, vnpayService,
             Clock.fixed(LocalDateTime.of(2026, 10, 4, 10, 0).atZone(ZONE).toInstant(), ZONE));
 
     private Shop shopA;
@@ -236,6 +238,22 @@ class CheckoutServiceImplTest {
         verify(orderRepository, never()).save(any());
         verify(promotionService, never()).recordUsage(anyLong(), anyLong(), anyLong(), any());
         verify(paymentRepository, never()).existsByTxnRef(anyString());
+    }
+
+    @Test
+    void vnpay_isOfferedOnlyWhenConfigured_andCreatesPendingVnpayPayment() {
+        CheckoutRequest request = request(1L);
+        request.setPaymentMethod(PaymentMethod.VNPAY);
+        assertThat(service.preview(USER_ID, request).getEnabledPaymentMethods()).containsExactly(PaymentMethod.COD);
+
+        when(vnpayService.isEnabled()).thenReturn(true);
+        assertThat(service.preview(USER_ID, request).getErrors()).isEmpty();
+        service.placeOrder(USER_ID, request);
+
+        ArgumentCaptor<Payment> payment = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository).save(payment.capture());
+        assertThat(payment.getValue().getMethod()).isEqualTo(PaymentMethod.VNPAY);
+        assertThat(payment.getValue().getStatus()).isEqualTo(com.starshop.entity.enums.PaymentStatus.PENDING);
     }
 
     private static CheckoutRequest request(Long... itemIds) {

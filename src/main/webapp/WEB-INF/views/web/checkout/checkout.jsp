@@ -175,11 +175,13 @@
                     <div class="card-header"><h3 class="card-title"><i class="ti ti-credit-card text-primary me-1"></i>Thanh toán</h3></div>
                     <div class="list-group list-group-flush">
                         <c:forEach var="m" items="${checkout.paymentMethods}">
-                            <label class="list-group-item d-flex align-items-center gap-2 ${m eq 'COD' ? '' : 'text-secondary'}">
+                            <c:set var="methodEnabled" value="${checkout.enabledPaymentMethods.contains(m)}"/>
+                            <label class="list-group-item d-flex align-items-center gap-2 ${methodEnabled ? '' : 'text-secondary'}">
                                 <input class="form-check-input m-0" type="radio" name="payment" value="${m}" data-refresh
-                                    ${m eq checkout.paymentMethod ? 'checked' : ''} ${m eq 'COD' ? '' : 'disabled'}>
+                                    ${m eq checkout.paymentMethod ? 'checked' : ''} ${methodEnabled ? '' : 'disabled'}>
                                 <span class="flex-fill">${m.label}</span>
-                                <c:if test="${m ne 'COD'}"><span class="badge bg-secondary-lt">Sắp có</span></c:if>
+                                <c:if test="${not methodEnabled}"><span class="badge bg-secondary-lt">Sắp có</span></c:if>
+                                <c:if test="${m eq 'VNPAY' and methodEnabled}"><span class="small text-secondary">ATM / Visa / QR</span></c:if>
                             </label>
                         </c:forEach>
                     </div>
@@ -212,7 +214,7 @@
                             </div>
                         </c:if>
                         <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" id="place-order" ${checkout.canPlace ? '' : 'disabled'}>
-                            <i class="ti ti-check me-1"></i>Đặt hàng
+                            <i class="ti ti-check me-1"></i>${checkout.paymentMethod eq 'COD' ? 'Đặt hàng' : 'Đặt hàng và thanh toán'}
                         </button>
                         <div class="small text-secondary mt-2 text-center">Mỗi shop là một đơn riêng, giao và theo dõi riêng.</div>
                     </div>

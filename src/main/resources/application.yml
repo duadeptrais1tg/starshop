@@ -94,3 +94,12 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY:}
   api-secret: ${CLOUDINARY_API_SECRET:}
   folder: ${CLOUDINARY_FOLDER:starshop}
+
+# VNPAY (sandbox). tmn-code / hash-secret là bí mật: đặt qua biến môi trường hoặc application-local.yml.
+# Hướng dẫn lấy tài khoản sandbox: docs/thanh-toan-vnpay.md
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE:}
+  hash-secret: ${VNPAY_HASH_SECRET:}
+  pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  return-url: ${VNPAY_RETURN_URL:http://localhost:8080/payment/vnpay/return}
+  expire-minutes: ${VNPAY_EXPIRE_MINUTES:15}

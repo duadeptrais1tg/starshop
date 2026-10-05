@@ -23,6 +23,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"shop", "items"})
     List<Order> findByPaymentTxnRefAndUserIdOrderByIdAsc(String txnRef, Long userId);
 
+    /** Các đơn của một lần thanh toán, kèm sản phẩm (để trả lại giỏ khi thanh toán thất bại). */
+    @EntityGraph(attributePaths = {"items", "items.product"})
+    List<Order> findByPaymentIdOrderByIdAsc(Long paymentId);
+
     boolean existsByCarrierId(Long carrierId);
 
     /** Tổng tiền các đơn ở một trạng thái (tính trong DB, không lặp trong Java). */
