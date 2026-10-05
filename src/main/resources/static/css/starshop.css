@@ -264,3 +264,15 @@
 .ss-pre-line {
     white-space: pre-line;
 }
+
+/* ---------- Vendor: ảnh sản phẩm ---------- */
+.ss-vendor-thumb {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.ss-vendor-preview {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+}

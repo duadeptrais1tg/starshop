@@ -31,4 +31,9 @@ public interface ViewedProductRepository extends JpaRepository<ViewedProduct, Lo
     @Modifying
     @Query("delete from ViewedProduct v where v.user.id = :userId")
     int deleteByUserId(@Param("userId") Long userId);
+
+    /** Dọn dữ liệu trỏ tới sản phẩm trước khi xóa hẳn sản phẩm. */
+    @Modifying
+    @Query("delete from ViewedProduct v where v.product.id = :productId")
+    int deleteByProductId(@Param("productId") Long productId);
 }

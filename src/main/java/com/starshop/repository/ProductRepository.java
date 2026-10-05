@@ -62,6 +62,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     /** Danh sách có phân trang, nạp sẵn shop để hiển thị tên shop trên card (tránh N+1). */
     @Override
-    @EntityGraph(attributePaths = "shop")
+    @EntityGraph(attributePaths = {"shop", "category"})
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
+
+    boolean existsBySlug(String slug);
 }

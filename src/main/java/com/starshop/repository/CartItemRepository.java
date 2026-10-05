@@ -35,4 +35,9 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     /** Số dòng trong giỏ (hiện trên badge header). */
     long countByCartUserId(Long userId);
+
+    /** Dọn dữ liệu trỏ tới sản phẩm trước khi xóa hẳn sản phẩm. */
+    @Modifying
+    @Query("delete from CartItem ci where ci.product.id = :productId")
+    int deleteByProductId(@Param("productId") Long productId);
 }

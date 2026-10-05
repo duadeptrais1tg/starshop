@@ -87,4 +87,17 @@ public final class ProductSpecifications {
     public static Specification<Product> idNot(Long id) {
         return id == null ? null : (root, query, cb) -> cb.notEqual(root.get("id"), id);
     }
+
+    /** Lọc theo trạng thái bán: null = tất cả. */
+    public static Specification<Product> active(Boolean active) {
+        return active == null ? null : (root, query, cb) -> cb.equal(root.get("active"), active);
+    }
+
+    public static Specification<Product> outOfStock() {
+        return (root, query, cb) -> cb.le(root.get("stock"), 0);
+    }
+
+    public static Specification<Product> category(Long categoryId) {
+        return categoryId == null ? null : (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
+    }
 }

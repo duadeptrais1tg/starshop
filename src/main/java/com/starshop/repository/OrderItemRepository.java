@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
+
+    /** Sản phẩm đã có trong đơn hàng nào chưa (đã có đơn thì không xóa, chỉ ẩn). */
+    boolean existsByProductId(Long productId);
 }
