@@ -23,9 +23,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     boolean existsByCode(String code);
 
-    /** Danh sách có phân trang (trang đơn của vendor), nạp sẵn thanh toán + nhà vận chuyển. */
+    /** Danh sách có phân trang (đơn của vendor / của khách), nạp sẵn thanh toán + nhà vận chuyển + shop. */
     @Override
-    @EntityGraph(attributePaths = {"payment", "carrier"})
+    @EntityGraph(attributePaths = {"payment", "carrier", "shop"})
     Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 
     /** Các đơn tạo trong một lần thanh toán của user (trang đặt hàng thành công). */

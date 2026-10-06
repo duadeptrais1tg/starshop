@@ -25,6 +25,10 @@ public final class OrderSpecifications {
         return (root, query, cb) -> cb.equal(root.get("shop").get("id"), shopId);
     }
 
+    public static Specification<Order> user(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
+
     public static Specification<Order> statusIn(Collection<OrderStatus> statuses) {
         return statuses == null || statuses.isEmpty() ? null : (root, query, cb) -> root.get("status").in(statuses);
     }

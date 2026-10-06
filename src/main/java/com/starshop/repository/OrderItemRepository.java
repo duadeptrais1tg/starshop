@@ -18,4 +18,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     /** Tổng số sản phẩm của nhiều đơn trong 1 query. Mỗi phần tử: [orderId (Long), tổng số lượng (Long)]. */
     @Query("select i.order.id, sum(i.quantity) from OrderItem i where i.order.id in :orderIds group by i.order.id")
     List<Object[]> sumQuantityByOrderIds(@Param("orderIds") Collection<Long> orderIds);
+
+    /** Sản phẩm của nhiều đơn trong 1 query (danh sách đơn của khách). */
+    List<OrderItem> findByOrderIdInOrderByIdAsc(Collection<Long> orderIds);
 }

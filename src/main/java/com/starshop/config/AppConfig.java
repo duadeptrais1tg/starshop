@@ -12,13 +12,14 @@ import java.time.Clock;
  * Cấu hình chung:
  * - @EnableAsync: cho phép @Async (gửi email không làm chậm request), dùng thread pool mặc định của Spring Boot.
  * - @EnableScheduling: job định kỳ (hủy thanh toán online quá hạn).
- * - AppMailProperties: cấu hình email (khối app.mail); VnpayProperties: cổng VNPAY (khối vnpay).
+ * - AppMailProperties: cấu hình email (khối app.mail); VnpayProperties: cổng VNPAY (khối vnpay);
+ *   OrderProperties: nghiệp vụ đơn hàng (khối app.order).
  * - Clock: nguồn thời gian dùng chung, test có thể thay bằng Clock cố định.
  */
 @Configuration
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties({AppMailProperties.class, VnpayProperties.class})
+@EnableConfigurationProperties({AppMailProperties.class, VnpayProperties.class, OrderProperties.class})
 public class AppConfig {
 
     @Bean

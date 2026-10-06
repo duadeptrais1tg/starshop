@@ -87,6 +87,9 @@ app:
     from-name: StarShop
     # Chỉ bật khi dev: chưa cấu hình SMTP thì in mã OTP ra log
     dev-log-otp: ${MAIL_DEV_LOG_OTP:false}
+  order:
+    # Số ngày sau khi giao khách được yêu cầu trả hàng
+    return-days: ${ORDER_RETURN_DAYS:3}
 
 # Cloudinary: lấy ở Dashboard -> API Keys. Không ghi key thật vào file này.
 cloudinary:
