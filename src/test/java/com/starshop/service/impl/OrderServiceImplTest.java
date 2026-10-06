@@ -46,6 +46,9 @@ class OrderServiceImplTest {
         assertThat(service.canTransition(OrderStatus.PICKED_UP, OrderStatus.CANCELLED)).isFalse();
         assertThat(service.canTransition(OrderStatus.NEW, OrderStatus.DELIVERED)).isFalse();
         assertThat(service.canTransition(OrderStatus.CANCELLED, OrderStatus.NEW)).isFalse();
+        // Từ chối trả hàng
+        assertThat(service.canTransition(OrderStatus.RETURN_REQUESTED, OrderStatus.DELIVERED)).isTrue();
+        assertThat(service.canTransition(OrderStatus.REFUNDED, OrderStatus.DELIVERED)).isFalse();
     }
 
     @Test
@@ -89,6 +92,19 @@ class OrderServiceImplTest {
         assertThat(order.getDeliveredAt()).isNotNull();
         verify(productRepository, never()).increaseStock(anyLong(), anyInt());
         verify(promotionService, never()).releaseUsage(anyLong());
+    }
+
+    @Test
+    void rejectedReturn_keepsOriginalDeliveredAt() {
+        Order order = order(OrderStatus.RETURN_REQUESTED);
+        java.time.LocalDateTime delivered = java.time.LocalDateTime.of(2026, 10, 1, 9, 0);
+        order.setDeliveredAt(delivered);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        service.changeStatus(1L, OrderStatus.DELIVERED, 5L, "Từ chối trả hàng");
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(order.getDeliveredAt()).isEqualTo(delivered);
     }
 
     private static Order order(OrderStatus status) {

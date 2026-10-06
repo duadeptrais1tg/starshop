@@ -8,6 +8,7 @@ import com.starshop.entity.enums.OrderStatus;
  * NEW → CONFIRMED → PICKED_UP → SHIPPING → DELIVERED
  * NEW/CONFIRMED → CANCELLED
  * DELIVERED → RETURN_REQUESTED → REFUNDED
+ * RETURN_REQUESTED → DELIVERED (vendor từ chối trả hàng)
  * </pre>
  * Các chức năng khác (hủy đơn, vendor xác nhận, shipper giao, thanh toán thất bại...) đều gọi service này.
  */

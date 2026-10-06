@@ -20,6 +20,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findByEmail(String email);
 
+    /** Shipper đang hoạt động (đã kích hoạt, không bị khóa) thuộc một nhà vận chuyển. */
+    @Query("select distinct u from User u join u.roles r where r.name = com.starshop.entity.enums.RoleName.SHIPPER"
+            + " and u.carrier.id = :carrierId and u.enabled = true and u.locked = false order by u.fullName")
+    List<User> findActiveShippersByCarrierId(@Param("carrierId") Long carrierId);
+
     boolean existsByEmail(String email);
 
     long countByCarrierId(Long carrierId);

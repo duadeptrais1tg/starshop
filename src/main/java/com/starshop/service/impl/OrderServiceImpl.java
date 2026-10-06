@@ -27,7 +27,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    /** Luồng trạng thái hợp lệ (hợp đồng chung trong OrderStatus). */
+    /**
+     * Luồng trạng thái hợp lệ (hợp đồng chung trong OrderStatus), thêm một nhánh đã thống nhất:
+     * RETURN_REQUESTED → DELIVERED khi vendor từ chối yêu cầu trả hàng.
+     */
     private static final Map<OrderStatus, Set<OrderStatus>> TRANSITIONS = new EnumMap<>(OrderStatus.class);
 
     static {
@@ -36,7 +39,7 @@ public class OrderServiceImpl implements OrderService {
         TRANSITIONS.put(OrderStatus.PICKED_UP, EnumSet.of(OrderStatus.SHIPPING));
         TRANSITIONS.put(OrderStatus.SHIPPING, EnumSet.of(OrderStatus.DELIVERED));
         TRANSITIONS.put(OrderStatus.DELIVERED, EnumSet.of(OrderStatus.RETURN_REQUESTED));
-        TRANSITIONS.put(OrderStatus.RETURN_REQUESTED, EnumSet.of(OrderStatus.REFUNDED));
+        TRANSITIONS.put(OrderStatus.RETURN_REQUESTED, EnumSet.of(OrderStatus.REFUNDED, OrderStatus.DELIVERED));
         TRANSITIONS.put(OrderStatus.CANCELLED, EnumSet.noneOf(OrderStatus.class));
         TRANSITIONS.put(OrderStatus.REFUNDED, EnumSet.noneOf(OrderStatus.class));
     }
@@ -66,7 +69,8 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(to);
         if (to == OrderStatus.CANCELLED) {
             order.setCancelReason(note);
-        } else if (to == OrderStatus.DELIVERED) {
+        } else if (to == OrderStatus.DELIVERED && order.getDeliveredAt() == null) {
+            // Chỉ ghi ngày giao lần đầu: từ chối trả hàng (RETURN_REQUESTED -> DELIVERED) giữ nguyên ngày cũ
             order.setDeliveredAt(LocalDateTime.now(clock));
         }
         historyRepository.save(OrderStatusHistory.builder()

@@ -3,8 +3,12 @@ package com.starshop.repository;
 import com.starshop.entity.Order;
 import com.starshop.entity.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
@@ -13,11 +17,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     Optional<Order> findByCode(String code);
 
     boolean existsByCode(String code);
+
+    /** Danh sách có phân trang (trang đơn của vendor), nạp sẵn thanh toán + nhà vận chuyển. */
+    @Override
+    @EntityGraph(attributePaths = {"payment", "carrier"})
+    Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 
     /** Các đơn tạo trong một lần thanh toán của user (trang đặt hàng thành công). */
     @EntityGraph(attributePaths = {"shop", "items"})
