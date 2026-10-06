@@ -132,7 +132,11 @@
                     <c:if test="${order.canAssign}">
                         <form method="post" action="<c:url value='/vendor/orders/${order.id}/assign'/>" class="mb-3">
                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                            <label class="form-label" for="shipperId">Giao cho shipper (<c:out value="${order.carrierName}"/>)</label>
+                            <c:if test="${order.reassignable}">
+                                <div class="alert alert-warning p-2 small mb-2"><i class="ti ti-alert-triangle me-1"></i>Lần giao trước thất bại:
+                                    <c:out value="${order.assignment.failReason}"/>. Bạn có thể giao cho shipper khác.</div>
+                            </c:if>
+                            <label class="form-label" for="shipperId">${order.reassignable ? 'Giao lại cho shipper' : 'Giao cho shipper'} (<c:out value="${order.carrierName}"/>)</label>
                             <c:choose>
                                 <c:when test="${empty order.shippers}">
                                     <div class="text-secondary small">Nhà vận chuyển này chưa có shipper hoạt động.</div>

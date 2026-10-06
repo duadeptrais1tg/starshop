@@ -9,6 +9,7 @@ import com.starshop.entity.ReturnRequest;
 import com.starshop.entity.ShipperAssignment;
 import com.starshop.entity.Shop;
 import com.starshop.entity.User;
+import com.starshop.entity.enums.AssignmentStatus;
 import com.starshop.entity.enums.OrderStatus;
 import com.starshop.entity.enums.PaymentMethod;
 import com.starshop.entity.enums.PaymentStatus;
@@ -45,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -115,7 +117,9 @@ public class VendorOrderServiceImpl implements VendorOrderService {
         BigDecimal shopReceives = merchandise.multiply(HUNDRED.subtract(o.getCommissionRate()))
                 .divide(HUNDRED, 0, RoundingMode.HALF_UP);
 
-        VendorOrderDetail.Assignment assignment = assignmentRepository.findFirstByOrderIdOrderByIdDesc(o.getId())
+        ShipperAssignment latest = assignmentRepository.findFirstByOrderIdOrderByIdDesc(o.getId()).orElse(null);
+        boolean reassignable = isReassignable(o, latest);
+        VendorOrderDetail.Assignment assignment = Optional.ofNullable(latest)
                 .map(a -> VendorOrderDetail.Assignment.builder()
                         .shipperName(a.getShipper().getFullName())
                         .shipperPhone(a.getShipper().getPhone())
@@ -176,7 +180,8 @@ public class VendorOrderServiceImpl implements VendorOrderService {
                                 .build()).toList())
                 .assignment(assignment)
                 .returnRequest(returnInfo)
-                .shippers(o.getStatus() == OrderStatus.CONFIRMED ? shipperOptions(o.getCarrier().getId()) : List.of())
+                .shippers(o.getStatus() == OrderStatus.CONFIRMED || reassignable ? shipperOptions(o.getCarrier().getId()) : List.of())
+                .reassignable(reassignable)
                 .build();
     }
 
@@ -203,7 +208,8 @@ public class VendorOrderServiceImpl implements VendorOrderService {
     @Transactional
     public void assignShipper(Long ownerId, Long orderId, Long shipperId) {
         Order order = requireOwnOrder(ownerId, orderId);
-        if (order.getStatus() != OrderStatus.CONFIRMED) {
+        boolean reassign = isReassignable(order, assignmentRepository.findFirstByOrderIdOrderByIdDesc(order.getId()).orElse(null));
+        if (order.getStatus() != OrderStatus.CONFIRMED && !reassign) {
             throw new BusinessException("Chỉ giao cho shipper khi đơn đã được xác nhận (đơn đang \""
                     + order.getStatus().getLabel() + "\").");
         }
@@ -217,8 +223,13 @@ public class VendorOrderServiceImpl implements VendorOrderService {
                 .shipper(shipper)
                 .assignedBy(userRepository.getReferenceById(ownerId))
                 .build());
-        orderService.changeStatus(order.getId(), OrderStatus.PICKED_UP, ownerId,
-                "Giao cho shipper " + shipper.getFullName());
+        if (reassign) {
+            // Lần trước giao thất bại: đơn vẫn Đang giao, chỉ đổi người giao
+            orderService.addHistoryNote(order.getId(), ownerId, "Giao lại cho shipper " + shipper.getFullName());
+        } else {
+            orderService.changeStatus(order.getId(), OrderStatus.PICKED_UP, ownerId,
+                    "Giao cho shipper " + shipper.getFullName());
+        }
     }
 
     @Override
@@ -290,6 +301,12 @@ public class VendorOrderServiceImpl implements VendorOrderService {
                 .phone(u.getPhone())
                 .activeOrders(active.getOrDefault(u.getId(), 0L))
                 .build()).toList();
+    }
+
+    /** Đơn đang giao mà lần giao gần nhất thất bại -> vendor giao lại cho shipper khác. */
+    private static boolean isReassignable(Order order, ShipperAssignment latest) {
+        return order.getStatus() == OrderStatus.SHIPPING && latest != null
+                && latest.getStatus() == AssignmentStatus.FAILED;
     }
 
     private static boolean isPaidOnline(Order o) {

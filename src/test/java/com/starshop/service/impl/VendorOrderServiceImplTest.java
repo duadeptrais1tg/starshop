@@ -148,6 +148,21 @@ class VendorOrderServiceImplTest {
     }
 
     @Test
+    void assignShipper_afterFailedDelivery_reassignsWithoutChangingStatus() {
+        order.setStatus(OrderStatus.SHIPPING);
+        shipper(50L, ghn);
+        assertThatThrownBy(() -> service.assignShipper(OWNER_ID, 100L, 50L)).hasMessageContaining("đã được xác nhận");
+
+        when(assignmentRepository.findFirstByOrderIdOrderByIdDesc(100L)).thenReturn(Optional.of(
+                ShipperAssignment.builder().id(1L).order(order).status(com.starshop.entity.enums.AssignmentStatus.FAILED).build()));
+        service.assignShipper(OWNER_ID, 100L, 50L);
+
+        verify(assignmentRepository).save(any(ShipperAssignment.class));
+        verify(orderService).addHistoryNote(eq(100L), eq(OWNER_ID), contains("Giao lại"));
+        verify(orderService, never()).changeStatus(anyLong(), any(), any(), any());
+    }
+
+    @Test
     void returns_approveAndReject() {
         order.setStatus(OrderStatus.RETURN_REQUESTED);
         ReturnRequest request = ReturnRequest.builder().order(order).reason("Hoa héo").build();

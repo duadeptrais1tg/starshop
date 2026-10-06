@@ -28,4 +28,11 @@ public interface OrderService {
      * @throws com.starshop.exception.BusinessException chuyển trạng thái không hợp lệ
      */
     void changeStatus(Long orderId, OrderStatus to, Long changedByUserId, String note);
+
+    /**
+     * Ghi một dòng vào lịch sử đơn mà KHÔNG đổi trạng thái (ví dụ shipper báo giao thất bại, giao lại).
+     *
+     * @throws com.starshop.exception.NotFoundException không có đơn
+     */
+    void addHistoryNote(Long orderId, Long changedByUserId, String note);
 }

@@ -45,8 +45,10 @@ public class VendorOrderDetail {
     private final Assignment assignment;
     /** Null nếu không có yêu cầu trả hàng. */
     private final ReturnInfo returnRequest;
-    /** Shipper chọn được (chỉ có khi đơn đã xác nhận). */
+    /** Shipper chọn được (khi đơn đã xác nhận hoặc cần giao lại). */
     private final List<ShipperOption> shippers;
+    /** Lần giao gần nhất thất bại: được giao lại cho shipper khác (đơn vẫn Đang giao). */
+    private final boolean reassignable;
 
     public boolean isCanConfirm() {
         return status == OrderStatus.NEW;
@@ -57,7 +59,7 @@ public class VendorOrderDetail {
     }
 
     public boolean isCanAssign() {
-        return status == OrderStatus.CONFIRMED;
+        return status == OrderStatus.CONFIRMED || reassignable;
     }
 
     public boolean isCanReviewReturn() {

@@ -89,4 +89,18 @@ public class OrderServiceImpl implements OrderService {
             promotionService.releaseUsage(orderId);
         }
     }
+
+    @Override
+    @Transactional
+    public void addHistoryNote(Long orderId, Long changedByUserId, String note) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy đơn hàng"));
+        historyRepository.save(OrderStatusHistory.builder()
+                .order(order)
+                .fromStatus(order.getStatus())
+                .toStatus(order.getStatus())
+                .changedBy(changedByUserId == null ? null : userRepository.getReferenceById(changedByUserId))
+                .note(note)
+                .build());
+    }
 }
