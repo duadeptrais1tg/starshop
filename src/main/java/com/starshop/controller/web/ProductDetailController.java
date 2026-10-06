@@ -2,6 +2,7 @@ package com.starshop.controller.web;
 
 import com.starshop.dto.product.ProductDetailDto;
 import com.starshop.security.UserPrincipal;
+import com.starshop.service.FavoriteService;
 import com.starshop.service.ProductCatalogService;
 import com.starshop.service.ReviewService;
 import com.starshop.service.ViewedProductService;
@@ -28,6 +29,7 @@ public class ProductDetailController {
     private final ProductCatalogService catalogService;
     private final ReviewService reviewService;
     private final ViewedProductService viewedProductService;
+    private final FavoriteService favoriteService;
 
     /**
      * @param page trang danh sách đánh giá (bắt đầu từ 1)
@@ -47,6 +49,7 @@ public class ProductDetailController {
             }
         }
         model.addAttribute("product", product);
+        model.addAttribute("favorited", user != null && favoriteService.isFavorite(user.getId(), product.getId()));
         model.addAttribute("page", reviewService.productReviews(product.getId(), page - 1));
         model.addAttribute("ratingSummary", reviewService.summary(product.getId()));
         model.addAttribute("related", catalogService.related(product, RELATED_LIMIT));

@@ -276,3 +276,32 @@
     height: 72px;
     object-fit: cover;
 }
+
+/* ---------- Nút yêu thích trên card ---------- */
+.ss-fav-btn {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .9);
+    color: #d6336c;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .15);
+    transition: transform .1s ease, background-color .15s ease;
+}
+
+.ss-fav-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Đã thích: nền hồng đậm, tim trắng (bộ icon không có tim tô kín) */
+.ss-fav-btn.active {
+    background: #d6336c;
+    color: #fff;
+}

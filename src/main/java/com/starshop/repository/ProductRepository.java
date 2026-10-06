@@ -55,6 +55,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("update Product p set p.stock = p.stock + :qty where p.id = :id")
     int increaseStock(@Param("id") Long id, @Param("qty") int qty);
 
+    /** Cộng / trừ lượt yêu thích bằng 1 câu UPDATE (không mất lượt khi nhiều người bấm cùng lúc, không âm). */
+    @Modifying
+    @Query("update Product p set p.favoriteCount = p.favoriteCount + :delta"
+            + " where p.id = :id and p.favoriteCount + :delta >= 0")
+    int addFavoriteCount(@Param("id") Long id, @Param("delta") int delta);
+
+    @Query("select p.favoriteCount from Product p where p.id = :id")
+    Integer findFavoriteCount(@Param("id") Long id);
+
     interface ShopStats {
         long getProductCount();
 

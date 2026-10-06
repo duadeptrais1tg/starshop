@@ -53,7 +53,7 @@
                         </c:choose>
                     </span>
                     <span>Đã bán <fmt:formatNumber value="${pricing.soldCount}" pattern="#,##0"/></span>
-                    <span><i class="ti ti-heart"></i> ${product.favoriteCount}</span>
+                    <span title="Lượt yêu thích"><i class="ti ti-heart"></i> <span data-fav-count="${product.id}">${product.favoriteCount}</span></span>
                 </div>
 
                 <div class="p-3 rounded mb-3" style="background:#fff0f6">
@@ -117,10 +117,14 @@
                         <div class="alert alert-warning mb-2">Sản phẩm tạm hết hàng.</div>
                     </c:otherwise>
                 </c:choose>
-                <%-- Yêu thích làm ở chức năng yêu thích: POST /user/favorites/{id} (yêu cầu đăng nhập) --%>
+                <%-- Yêu thích: starshop.js bật/tắt bằng AJAX; form là dự phòng khi tắt JavaScript --%>
                 <form method="post" action="<c:url value='/user/favorites/${product.id}'/>">
                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                    <button type="submit" class="btn btn-outline-danger"><i class="ti ti-heart me-1"></i>Yêu thích</button>
+                    <input type="hidden" name="redirect" value="<c:url value='/products/${product.slug}'/>">
+                    <button type="submit" class="btn btn-outline-danger ${favorited ? 'active' : ''}" data-fav-id="${product.id}"
+                            aria-pressed="${favorited ? 'true' : 'false'}">
+                        <i class="ti ti-heart me-1"></i><span data-fav-label>${favorited ? 'Đã yêu thích' : 'Yêu thích'}</span>
+                    </button>
                 </form>
             </div>
         </div>

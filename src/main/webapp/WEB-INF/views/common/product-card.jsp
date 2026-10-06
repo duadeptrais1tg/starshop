@@ -21,6 +21,9 @@
             <span class="ss-product-soldout">Hết hàng</span>
         </c:if>
     </a>
+    <%-- Nút tim: trạng thái và bật/tắt do starshop.js xử lý (AJAX) --%>
+    <button type="button" class="ss-fav-btn" data-fav-id="${product.id}" aria-pressed="false"
+            aria-label="Yêu thích" title="Yêu thích"><i class="ti ti-heart"></i></button>
     <div class="card-body d-flex flex-column">
         <div class="small text-secondary text-truncate"><i class="ti ti-building-store me-1"></i><c:out value="${product.shopName}"/></div>
         <a href="${productUrl}" class="text-reset fw-semibold ss-line-2 mb-2" title="<c:out value='${product.name}'/>"><c:out value="${product.name}"/></a>

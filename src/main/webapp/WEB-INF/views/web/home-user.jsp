@@ -66,6 +66,7 @@
                         col.innerHTML = StarShop.renderProductCard(p);
                         grid.appendChild(col);
                     });
+                    StarShop.syncFavorites(grid);
                     if (data.hasMore) {
                         btn.setAttribute('data-next-page', data.page + 1);
                         btn.disabled = false;

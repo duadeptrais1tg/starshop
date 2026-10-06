@@ -75,7 +75,9 @@
             + '<a href="' + url + '" class="ss-product-thumb">' + img
             + (p.discountPercent > 0 ? '<span class="badge bg-red text-white ss-product-badge">-' + p.discountPercent + '%</span>' : '')
             + (!p.inStock ? '<span class="ss-product-soldout">Hết hàng</span>' : '')
-            + '</a><div class="card-body d-flex flex-column">'
+            + '</a><button type="button" class="ss-fav-btn" data-fav-id="' + p.id + '" aria-pressed="false"'
+            + ' aria-label="Yêu thích" title="Yêu thích"><i class="ti ti-heart"></i></button>'
+            + '<div class="card-body d-flex flex-column">'
             + '<div class="small text-secondary text-truncate"><i class="ti ti-building-store me-1"></i>' + escapeHtml(p.shopName) + '</div>'
             + '<a href="' + url + '" class="text-reset fw-semibold ss-line-2 mb-2" title="' + escapeHtml(p.name) + '">' + escapeHtml(p.name) + '</a>'
             + '<div class="mt-auto"><div class="d-flex flex-wrap align-items-baseline gap-1">'
@@ -155,7 +157,83 @@
             });
     }
 
+    /** Tô trạng thái các nút tim theo id sản phẩm (mọi nút cùng sản phẩm trên trang). */
+    function setFavorite(productId, favorited, count) {
+        document.querySelectorAll('[data-fav-id="' + productId + '"]').forEach(function (btn) {
+            btn.classList.toggle('active', favorited);
+            btn.setAttribute('aria-pressed', favorited ? 'true' : 'false');
+            btn.title = favorited ? 'Bỏ yêu thích' : 'Yêu thích';
+            var label = btn.querySelector('[data-fav-label]');
+            if (label) {
+                label.textContent = favorited ? 'Đã yêu thích' : 'Yêu thích';
+            }
+        });
+        if (count != null) {
+            document.querySelectorAll('[data-fav-count="' + productId + '"]').forEach(function (el) {
+                el.textContent = count;
+            });
+        }
+    }
+
+    /**
+     * Hỏi server những sản phẩm đang hiển thị (trong root) mà user đã thích để tô đỏ tim.
+     * Khách chưa đăng nhập (401) thì bỏ qua, không chuyển trang.
+     */
+    function syncFavorites(root) {
+        var ids = [];
+        (root || document).querySelectorAll('[data-fav-id]').forEach(function (btn) {
+            var id = btn.getAttribute('data-fav-id');
+            if (ids.indexOf(id) < 0) {
+                ids.push(id);
+            }
+        });
+        if (!ids.length) {
+            return;
+        }
+        fetch('/api/favorites/ids?productIds=' + ids.join(','), {headers: {'Accept': 'application/json'}})
+            .then(function (res) { return res.ok ? res.json() : {ids: []}; })
+            .then(function (data) {
+                data.ids.forEach(function (id) { setFavorite(id, true, null); });
+            })
+            .catch(function () { });
+    }
+
+    /** Bấm tim (ủy quyền sự kiện -> áp dụng cả card được thêm bằng AJAX). Khách: postForm chuyển sang đăng nhập. */
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-fav-id]');
+        if (!btn) {
+            return;
+        }
+        e.preventDefault();
+        if (btn.disabled) {
+            return;
+        }
+        var productId = btn.getAttribute('data-fav-id');
+        btn.disabled = true;
+        postForm('/api/favorites/' + productId + '/toggle', {})
+            .then(function (data) {
+                setFavorite(productId, data.favorited, data.favoriteCount);
+                toast(data.favorited ? 'Đã thêm vào yêu thích.' : 'Đã bỏ khỏi yêu thích.', 'success');
+                // Trang "Yêu thích": bỏ thích thì ẩn card
+                if (!data.favorited && btn.closest('[data-fav-remove-card]')) {
+                    var col = btn.closest('.row > div');
+                    if (col) {
+                        col.remove();
+                    }
+                }
+            })
+            .catch(function (message) {
+                if (message) {
+                    toast(message, 'danger');
+                }
+            })
+            .then(function () { btn.disabled = false; });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () { syncFavorites(document); });
+
     window.StarShop = window.StarShop || {};
+    window.StarShop.syncFavorites = syncFavorites;
     window.StarShop.toast = toast;
     window.StarShop.setCartCount = setCartCount;
     window.StarShop.postForm = postForm;
