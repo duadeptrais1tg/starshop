@@ -1,6 +1,7 @@
 package com.starshop.service.impl;
 
 import com.starshop.dto.OptionDto;
+import com.starshop.dto.product.PromotionInfo;
 import com.starshop.dto.promotion.AutoPricing;
 import com.starshop.dto.promotion.CartLine;
 import com.starshop.dto.promotion.CouponDiscount;
@@ -13,15 +14,19 @@ import com.starshop.entity.Category;
 import com.starshop.entity.Coupon;
 import com.starshop.entity.CouponUsage;
 import com.starshop.entity.Promotion;
+import com.starshop.entity.Shop;
 import com.starshop.entity.enums.PromotionScope;
 import com.starshop.entity.enums.PromotionType;
+import com.starshop.entity.enums.ShopStatus;
 import com.starshop.exception.BusinessException;
 import com.starshop.exception.NotFoundException;
+import com.starshop.mapper.ProductMapper;
 import com.starshop.repository.CategoryRepository;
 import com.starshop.repository.CouponRepository;
 import com.starshop.repository.CouponUsageRepository;
 import com.starshop.repository.OrderRepository;
 import com.starshop.repository.PromotionRepository;
+import com.starshop.repository.ShopRepository;
 import com.starshop.repository.UserRepository;
 import com.starshop.repository.spec.PromotionSpecifications;
 import com.starshop.service.PromotionService;
@@ -59,6 +64,7 @@ public class PromotionServiceImpl implements PromotionService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final ShopRepository shopRepository;
     private final Clock clock;
 
     // ======================================================================= Quản lý
@@ -66,9 +72,13 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public Page<PromotionDto> search(String keyword, PromotionStatus status, int page) {
+        return searchIn(PromotionSpecifications.platformManaged(), keyword, status, page);
+    }
+
+    private Page<PromotionDto> searchIn(Specification<Promotion> owner, String keyword, PromotionStatus status, int page) {
         LocalDateTime now = now();
         Page<Promotion> promotions = promotionRepository.findAll(
-                Specification.allOf(PromotionSpecifications.platformManaged(),
+                Specification.allOf(owner,
                         PromotionSpecifications.nameContains(keyword),
                         PromotionSpecifications.status(status, now)),
                 PageRequest.of(Math.max(page, 0), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id")));
@@ -87,8 +97,11 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public PromotionForm getForm(Long id) {
-        Promotion p = find(id);
-        Coupon coupon = couponOf(id);
+        return formOf(find(id));
+    }
+
+    private PromotionForm formOf(Promotion p) {
+        Coupon coupon = couponOf(p.getId());
         PromotionForm form = new PromotionForm();
         form.setName(p.getName());
         form.setDescription(p.getDescription());
@@ -126,7 +139,12 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional
     public Long create(PromotionForm form, Long createdByUserId) {
-        validate(form);
+        return createInternal(form, createdByUserId, null);
+    }
+
+    /** @param shop null = khuyến mãi của sàn (Admin); có giá trị = khuyến mãi của shop (Vendor) */
+    private Long createInternal(PromotionForm form, Long createdByUserId, Shop shop) {
+        validate(form, shop);
         if (!form.getEndAt().isAfter(now())) {
             throw new BusinessException("Thời gian kết thúc phải ở tương lai.");
         }
@@ -135,7 +153,7 @@ public class PromotionServiceImpl implements PromotionService {
             throw new BusinessException("Mã \"" + code + "\" đã được dùng cho chương trình khác.");
         }
         Promotion p = new Promotion();
-        applyValues(p, form);
+        applyValues(p, form, shop);
         p.setName(form.getName().trim());
         p.setDescription(trimToNull(form.getDescription()));
         p.setEndAt(form.getEndAt());
@@ -154,7 +172,11 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional
     public void update(Long id, PromotionForm form) {
-        Promotion p = find(id);
+        updateInternal(find(id), form, null);
+    }
+
+    private void updateInternal(Promotion p, PromotionForm form, Shop shop) {
+        Long id = p.getId();
         Coupon coupon = couponOf(id);
         LocalDateTime now = now();
         if (!StringUtils.hasText(form.getName())) {
@@ -183,11 +205,11 @@ public class PromotionServiceImpl implements PromotionService {
                 updateLimits(coupon, form);
             }
         } else {
-            validate(form);
+            validate(form, shop);
             if (code != null && couponRepository.existsByCodeIgnoreCaseAndPromotionIdNot(code, id)) {
                 throw new BusinessException("Mã \"" + code + "\" đã được dùng cho chương trình khác.");
             }
-            applyValues(p, form);
+            applyValues(p, form, shop);
             p.setEndAt(form.getEndAt());
             if (code == null && coupon != null) {
                 couponRepository.delete(coupon);
@@ -211,10 +233,102 @@ public class PromotionServiceImpl implements PromotionService {
         p.setActive(!p.isActive());
     }
 
+    // ======================================================================= Quản lý (Vendor – B8)
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PromotionDto> searchForShop(Long ownerId, String keyword, PromotionStatus status, int page) {
+        return searchIn(PromotionSpecifications.ofShop(requireShop(ownerId).getId()), keyword, status, page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PromotionForm getShopForm(Long ownerId, Long id) {
+        return formOf(findOwn(ownerId, id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isShopLocked(Long ownerId, Long id) {
+        Promotion p = findOwn(ownerId, id);
+        return locked(p, couponOf(id), now());
+    }
+
+    @Override
+    @Transactional
+    public Long createForShop(Long ownerId, PromotionForm form) {
+        Shop shop = requireShop(ownerId);
+        toShopScope(form);
+        return createInternal(form, ownerId, shop);
+    }
+
+    @Override
+    @Transactional
+    public void updateForShop(Long ownerId, Long id, PromotionForm form) {
+        Promotion p = findOwn(ownerId, id);
+        toShopScope(form);
+        updateInternal(p, form, p.getShop());
+    }
+
+    @Override
+    @Transactional
+    public void toggleForShop(Long ownerId, Long id) {
+        Promotion p = findOwn(ownerId, id);
+        p.setActive(!p.isActive());
+    }
+
+    @Override
+    @Transactional
+    public void deleteForShop(Long ownerId, Long id) {
+        deleteInternal(findOwn(ownerId, id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PromotionInfo> activeShopPromotions(Long shopId) {
+        List<Promotion> promotions = promotionRepository.findRunningForShop(shopId, now());
+        if (promotions.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, List<String>> codes = new HashMap<>();
+        for (Coupon c : couponRepository.findByPromotionIdInAndActiveTrue(promotions.stream().map(Promotion::getId).toList())) {
+            codes.computeIfAbsent(c.getPromotion().getId(), k -> new ArrayList<>()).add(c.getCode());
+        }
+        return promotions.stream()
+                .map(p -> ProductMapper.toPromotionInfo(p, codes.getOrDefault(p.getId(), List.of())))
+                .toList();
+    }
+
+    /** Shop của vendor (đã duyệt hoặc đang bị đình chỉ vẫn quản lý được). */
+    private Shop requireShop(Long ownerId) {
+        return shopRepository.findByOwnerId(ownerId)
+                .filter(s -> s.getStatus() == ShopStatus.APPROVED || s.getStatus() == ShopStatus.SUSPENDED)
+                .orElseThrow(() -> new NotFoundException("Bạn chưa có shop đang hoạt động"));
+    }
+
+    /** Khuyến mãi phải thuộc shop của vendor; của shop khác / của sàn coi như không tồn tại. */
+    private Promotion findOwn(Long ownerId, Long id) {
+        Shop shop = requireShop(ownerId);
+        return promotionRepository.findById(id)
+                .filter(p -> p.getScope() == PromotionScope.SHOP && p.getShop() != null
+                        && p.getShop().getId().equals(shop.getId()))
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy chương trình khuyến mãi"));
+    }
+
+    /** Vendor không chọn phạm vi: luôn là sản phẩm của shop mình. */
+    private static void toShopScope(PromotionForm form) {
+        form.setScope(PromotionScope.SHOP);
+        form.setCategoryId(null);
+    }
+
     @Override
     @Transactional
     public void delete(Long id) {
-        Promotion p = find(id);
+        deleteInternal(find(id));
+    }
+
+    private void deleteInternal(Promotion p) {
+        Long id = p.getId();
         Coupon coupon = couponOf(id);
         if (locked(p, coupon, now())) {
             throw new BusinessException("Chương trình đã có người sử dụng nên không thể xóa. Bạn có thể tắt chương trình.");
@@ -394,16 +508,23 @@ public class PromotionServiceImpl implements PromotionService {
         return !p.getStartAt().isAfter(now);
     }
 
-    /** Kiểm tra lại toàn bộ giá trị ở service (không chỉ dựa vào @Valid). */
-    private void validate(PromotionForm form) {
+    /**
+     * Kiểm tra lại toàn bộ giá trị ở service (không chỉ dựa vào @Valid).
+     *
+     * @param shop null = Admin (chỉ toàn sàn / danh mục); có giá trị = Vendor (luôn phạm vi shop)
+     */
+    private void validate(PromotionForm form, Shop shop) {
         if (!StringUtils.hasText(form.getName())) {
             throw new BusinessException("Vui lòng nhập tên chương trình.");
         }
         if (form.getType() == null || form.getScope() == null) {
             throw new BusinessException("Vui lòng chọn loại và phạm vi khuyến mãi.");
         }
-        if (form.getScope() == PromotionScope.SHOP) {
+        if (shop == null && form.getScope() == PromotionScope.SHOP) {
             throw new BusinessException("Khuyến mãi theo shop do người bán tự tạo.");
+        }
+        if (shop != null && form.getScope() != PromotionScope.SHOP) {
+            throw new BusinessException("Người bán chỉ tạo được khuyến mãi cho sản phẩm của shop mình.");
         }
         if (form.getStartAt() == null || form.getEndAt() == null || !form.getEndAt().isAfter(form.getStartAt())) {
             throw new BusinessException("Thời gian kết thúc phải sau thời gian bắt đầu.");
@@ -441,11 +562,11 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     /** Các trường "giá trị" (bị khóa khi đã có người dùng). */
-    private void applyValues(Promotion p, PromotionForm form) {
+    private void applyValues(Promotion p, PromotionForm form, Shop shop) {
         p.setType(form.getType());
         p.setScope(form.getScope());
         p.setCategory(form.getScope() == PromotionScope.CATEGORY ? categoryRepository.getReferenceById(form.getCategoryId()) : null);
-        p.setShop(null);
+        p.setShop(form.getScope() == PromotionScope.SHOP ? shop : null);
         p.setDiscountValue(form.getDiscountValue());
         // Giảm tối đa chỉ có nghĩa với giảm %
         p.setMaxDiscount(form.getType() == PromotionType.PRODUCT_PERCENT ? form.getMaxDiscount() : null);

@@ -305,3 +305,9 @@
     background: #d6336c;
     color: #fff;
 }
+
+/* ---------- Thẻ khuyến mãi của shop ---------- */
+.ss-promo-ticket {
+    border-left: 4px solid var(--tblr-primary, #d6336c) !important;
+    background: #fff7fa;
+}

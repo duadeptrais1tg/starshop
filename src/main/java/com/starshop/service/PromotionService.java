@@ -1,6 +1,7 @@
 package com.starshop.service;
 
 import com.starshop.dto.OptionDto;
+import com.starshop.dto.product.PromotionInfo;
 import com.starshop.dto.promotion.AutoPricing;
 import com.starshop.dto.promotion.CartLine;
 import com.starshop.dto.promotion.CouponDiscount;
@@ -50,6 +51,28 @@ public interface PromotionService {
 
     /** @throws com.starshop.exception.BusinessException đã có người dùng */
     void delete(Long id);
+
+    // ======================================================================= Quản lý (Vendor – B8)
+    // Khuyến mãi của shop: phạm vi luôn là SHOP của chính vendor; dùng chung kiểm tra và quy tắc khóa với Admin.
+    // Khuyến mãi của shop khác -> NotFoundException.
+
+    Page<PromotionDto> searchForShop(Long ownerId, String keyword, PromotionStatus status, int page);
+
+    PromotionForm getShopForm(Long ownerId, Long id);
+
+    boolean isShopLocked(Long ownerId, Long id);
+
+    Long createForShop(Long ownerId, PromotionForm form);
+
+    void updateForShop(Long ownerId, Long id, PromotionForm form);
+
+    void toggleForShop(Long ownerId, Long id);
+
+    /** @throws com.starshop.exception.BusinessException đã có người dùng */
+    void deleteForShop(Long ownerId, Long id);
+
+    /** Khuyến mãi đang chạy của shop kèm mã (hiển thị trên trang shop công khai). */
+    List<PromotionInfo> activeShopPromotions(Long shopId);
 
     // ======================================================================= Dùng cho đặt hàng (A8)
 

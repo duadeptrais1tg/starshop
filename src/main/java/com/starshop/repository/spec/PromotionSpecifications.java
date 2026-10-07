@@ -29,6 +29,13 @@ public final class PromotionSpecifications {
         return (root, query, cb) -> root.get("scope").in(PromotionScope.PLATFORM, PromotionScope.CATEGORY);
     }
 
+    /** Khuyến mãi của một shop (Vendor quản lý). */
+    public static Specification<Promotion> ofShop(Long shopId) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("scope"), PromotionScope.SHOP),
+                cb.equal(root.get("shop").get("id"), shopId));
+    }
+
     public static Specification<Promotion> status(PromotionStatus status, LocalDateTime now) {
         if (status == null) {
             return null;

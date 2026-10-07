@@ -18,7 +18,11 @@ import com.starshop.repository.CouponRepository;
 import com.starshop.repository.CouponUsageRepository;
 import com.starshop.repository.OrderRepository;
 import com.starshop.repository.PromotionRepository;
+import com.starshop.repository.ShopRepository;
 import com.starshop.repository.UserRepository;
+import com.starshop.entity.enums.ShopStatus;
+import com.starshop.exception.NotFoundException;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,8 +50,10 @@ class PromotionServiceImplTest {
     private final CouponRepository couponRepository = mock(CouponRepository.class);
     private final CouponUsageRepository usageRepository = mock(CouponUsageRepository.class);
     private final CategoryRepository categoryRepository = mock(CategoryRepository.class);
+    private final ShopRepository shopRepository = mock(ShopRepository.class);
     private final PromotionServiceImpl service = new PromotionServiceImpl(promotionRepository, couponRepository,
             usageRepository, categoryRepository, mock(UserRepository.class), mock(OrderRepository.class),
+            shopRepository,
             Clock.fixed(NOW.atZone(ZONE).toInstant(), ZONE));
 
     private Category flowers;
@@ -268,6 +274,112 @@ class PromotionServiceImplTest {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    // ======================================================= Khuyến mãi của shop (B8)
+
+    @Test
+    void vendorCreate_alwaysShopScope_ofOwnShop() {
+        Shop shop = shopOf(3L, 7L);
+        when(promotionRepository.save(any(Promotion.class))).thenAnswer(inv -> {
+            Promotion p = inv.getArgument(0);
+            p.setId(50L);
+            return p;
+        });
+        PromotionForm form = formOf(promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0"), "SHOP10");
+        form.setScope(PromotionScope.PLATFORM);   // vendor cố gửi phạm vi toàn sàn
+        form.setCategoryId(1L);
+
+        service.createForShop(3L, form);
+
+        ArgumentCaptor<Promotion> captor = ArgumentCaptor.forClass(Promotion.class);
+        verify(promotionRepository).save(captor.capture());
+        assertThat(captor.getValue().getScope()).isEqualTo(PromotionScope.SHOP);
+        assertThat(captor.getValue().getShop()).isSameAs(shop);
+        assertThat(captor.getValue().getCategory()).isNull();
+        verify(couponRepository).save(any(Coupon.class));
+    }
+
+    @Test
+    void vendor_cannotTouchOtherShopsOrPlatformPromotions() {
+        shopOf(3L, 7L);
+        Promotion otherShop = promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0");
+        otherShop.setId(60L);
+        otherShop.setScope(PromotionScope.SHOP);
+        otherShop.setShop(Shop.builder().id(8L).build());
+        Promotion platform = promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0");
+        platform.setId(61L);
+        when(promotionRepository.findById(60L)).thenReturn(Optional.of(otherShop));
+        when(promotionRepository.findById(61L)).thenReturn(Optional.of(platform));
+
+        for (Long id : List.of(60L, 61L)) {
+            assertThatThrownBy(() -> service.getShopForm(3L, id)).isInstanceOf(NotFoundException.class);
+            assertThatThrownBy(() -> service.toggleForShop(3L, id)).isInstanceOf(NotFoundException.class);
+            assertThatThrownBy(() -> service.deleteForShop(3L, id)).isInstanceOf(NotFoundException.class);
+            assertThatThrownBy(() -> service.updateForShop(3L, id, formOf(otherShop, null))).isInstanceOf(NotFoundException.class);
+        }
+        assertThat(otherShop.isActive()).isTrue();
+        verify(promotionRepository, never()).delete(any(Promotion.class));
+    }
+
+    @Test
+    void vendorWithoutApprovedShop_cannotCreate() {
+        Shop pending = shopOf(3L, 7L);
+        pending.setStatus(ShopStatus.PENDING);
+        assertThatThrownBy(() -> service.createForShop(3L, formOf(promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0"), null)))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void vendor_sharesValidationAndLockRules() {
+        Shop shop = shopOf(3L, 7L);
+        Promotion own = promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0");
+        own.setId(70L);
+        own.setScope(PromotionScope.SHOP);
+        own.setShop(shop);
+        when(promotionRepository.findById(70L)).thenReturn(Optional.of(own));
+        Coupon coupon = coupon("SHOP10", own, 10);
+        coupon.setUsedCount(1);   // đã có người dùng -> khóa giá trị
+        when(couponRepository.findByPromotionId(70L)).thenReturn(List.of(coupon));
+
+        PromotionForm tooMuch = formOf(own, "SHOP10");
+        tooMuch.setDiscountValue(new BigDecimal("150"));
+        assertThatThrownBy(() -> service.updateForShop(3L, 70L, tooMuch)).hasMessageContaining("không thể sửa");
+        assertThat(service.isShopLocked(3L, 70L)).isTrue();
+        assertThatThrownBy(() -> service.deleteForShop(3L, 70L)).hasMessageContaining("không thể xóa");
+
+        PromotionForm fresh = formOf(own, null);
+        fresh.setDiscountValue(new BigDecimal("150"));
+        assertThatThrownBy(() -> service.createForShop(3L, fresh)).hasMessageContaining("tối đa 100%");
+    }
+
+    @Test
+    void admin_stillCannotCreateShopScope() {
+        PromotionForm form = formOf(promotion(PromotionType.PRODUCT_PERCENT, "10", null, "0"), null);
+        form.setScope(PromotionScope.SHOP);
+        assertThatThrownBy(() -> service.create(form, 1L)).hasMessageContaining("người bán tự tạo");
+    }
+
+    @Test
+    void activeShopPromotions_includeCouponCodes() {
+        Promotion p = promotion(PromotionType.SHIPPING_DISCOUNT, "20000", null, "0");
+        p.setId(80L);
+        p.setName("Freeship shop");
+        when(promotionRepository.findRunningForShop(3L, NOW)).thenReturn(List.of(p));
+        Coupon c = Coupon.builder().code("FREESHIP").promotion(p).build();
+        when(couponRepository.findByPromotionIdInAndActiveTrue(List.of(80L))).thenReturn(List.of(c));
+
+        var infos = service.activeShopPromotions(3L);
+
+        assertThat(infos).hasSize(1);
+        assertThat(infos.get(0).getName()).isEqualTo("Freeship shop");
+        assertThat(infos.get(0).getCouponCodes()).containsExactly("FREESHIP");
+    }
+
+    private Shop shopOf(Long ownerId, Long shopId) {
+        Shop shop = Shop.builder().id(shopId).name("Shop A").status(ShopStatus.APPROVED).build();
+        when(shopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        return shop;
+    }
 
     private Promotion promotion(PromotionType type, String value, String max, String min) {
         return Promotion.builder()

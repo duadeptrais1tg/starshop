@@ -4,6 +4,7 @@ import com.starshop.dto.product.ProductSearchCriteria;
 import com.starshop.dto.product.ProductSort;
 import com.starshop.dto.shop.ShopPageDto;
 import com.starshop.service.ProductCatalogService;
+import com.starshop.service.PromotionService;
 import com.starshop.service.ShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,7 @@ public class ShopPageController {
 
     private final ShopService shopService;
     private final ProductCatalogService catalogService;
+    private final PromotionService promotionService;
 
     @GetMapping("/shop/{slug}")
     public String shop(@PathVariable String slug,
@@ -37,6 +39,7 @@ public class ShopPageController {
         criteria.setShopId(shop.getId());
         criteria.normalize();
         model.addAttribute("shop", shop);
+        model.addAttribute("promotions", promotionService.activeShopPromotions(shop.getId()));
         model.addAttribute("page", catalogService.search(criteria));
         model.addAttribute("sorts", ProductSort.values());
         return "web/shop/page";

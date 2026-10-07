@@ -50,6 +50,43 @@
     </div>
 </div>
 
+<%-- Khuyến mãi đang chạy của shop (mã giảm giá nhập ở bước thanh toán) --%>
+<c:if test="${not empty promotions}">
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title"><i class="ti ti-discount-2 text-primary me-1"></i>Khuyến mãi của shop</h3></div>
+        <div class="card-body">
+            <div class="row g-2">
+                <c:forEach var="promo" items="${promotions}">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="border rounded p-2 h-100 small ss-promo-ticket">
+                            <div class="fw-semibold"><c:out value="${promo.name}"/></div>
+                            <div class="text-secondary">
+                                <c:choose>
+                                    <c:when test="${promo.percent}">
+                                        Giảm <fmt:formatNumber value="${promo.discountValue}" pattern="#,##0.##"/>%
+                                        <c:if test="${not empty promo.maxDiscount}"> (tối đa <fmt:formatNumber value="${promo.maxDiscount}" pattern="#,##0"/>₫)</c:if>
+                                    </c:when>
+                                    <c:otherwise>Giảm <fmt:formatNumber value="${promo.discountValue}" pattern="#,##0"/>₫ phí vận chuyển</c:otherwise>
+                                </c:choose>
+                                <c:if test="${promo.minOrderValue > 0}"> · đơn từ <fmt:formatNumber value="${promo.minOrderValue}" pattern="#,##0"/>₫</c:if>
+                                · đến ${promo.endAt}
+                            </div>
+                            <c:choose>
+                                <c:when test="${empty promo.couponCodes}"><span class="badge bg-success-lt mt-1">Tự động áp dụng</span></c:when>
+                                <c:otherwise>
+                                    <c:forEach var="code" items="${promo.couponCodes}">
+                                        <span class="badge bg-primary-lt mt-1"><i class="ti ti-ticket me-1"></i>Mã: <c:out value="${code}"/></span>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </c:forEach>
+            </div>
+        </div>
+    </div>
+</c:if>
+
 <%-- Tìm trong shop + sắp xếp --%>
 <c:url var="shopUrl" value="/shop/${shop.slug}"/>
 <form method="get" action="${shopUrl}" class="d-flex flex-wrap align-items-center gap-2 mb-3" role="search">

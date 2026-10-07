@@ -39,4 +39,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long>, Jpa
     @Query("select p from Promotion p where p.active = true and p.startAt <= :now and p.endAt >= :now"
             + " and not exists (select c from Coupon c where c.promotion = p)")
     List<Promotion> findRunningAutoPromotions(@Param("now") LocalDateTime now);
+
+    /** Khuyến mãi của shop đang chạy (trang shop công khai), sắp hết hạn trước. */
+    @Query("select p from Promotion p where p.scope = com.starshop.entity.enums.PromotionScope.SHOP"
+            + " and p.shop.id = :shopId and p.active = true and p.startAt <= :now and p.endAt >= :now order by p.endAt asc")
+    List<Promotion> findRunningForShop(@Param("shopId") Long shopId, @Param("now") LocalDateTime now);
 }
