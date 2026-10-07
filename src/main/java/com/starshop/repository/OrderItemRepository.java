@@ -1,11 +1,14 @@
 package com.starshop.repository;
 
+import com.starshop.dto.revenue.RevenueProjections;
 import com.starshop.entity.OrderItem;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,4 +24,14 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     /** Sản phẩm của nhiều đơn trong 1 query (danh sách đơn của khách). */
     List<OrderItem> findByOrderIdInOrderByIdAsc(Collection<Long> orderIds);
+
+    /** Top sản phẩm bán chạy của shop (đơn đã giao trong khoảng thời gian), theo số lượng bán. */
+    @Query("select p.id as productId, p.name as name, p.slug as slug,"
+            + " sum(i.quantity) as quantity, sum(i.lineTotal) as revenue"
+            + " from OrderItem i join i.order o join i.product p"
+            + " where o.shop.id = :shopId and o.status = com.starshop.entity.enums.OrderStatus.DELIVERED"
+            + " and o.deliveredAt >= :from and o.deliveredAt < :to"
+            + " group by p.id, p.name, p.slug order by sum(i.quantity) desc, sum(i.lineTotal) desc")
+    List<RevenueProjections.TopProduct> topProducts(@Param("shopId") Long shopId, @Param("from") LocalDateTime from,
+                                                    @Param("to") LocalDateTime to, Pageable pageable);
 }
