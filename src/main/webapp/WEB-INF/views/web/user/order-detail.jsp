@@ -43,21 +43,32 @@
                     </div>
                     <div class="list-group list-group-flush">
                         <c:forEach var="i" items="${order.items}">
-                            <a href="<c:url value='/products/${i.productSlug}'/>" class="list-group-item list-group-item-action">
+                            <div class="list-group-item">
                                 <div class="row g-2 align-items-center">
                                     <div class="col-auto">
-                                        <c:choose>
-                                            <c:when test="${not empty i.imageUrl}"><span class="avatar" style="background-image: url('<c:out value="${i.imageUrl}"/>')"></span></c:when>
-                                            <c:otherwise><span class="avatar bg-primary-lt text-primary"><i class="ti ti-flower"></i></span></c:otherwise>
-                                        </c:choose>
+                                        <a href="<c:url value='/products/${i.productSlug}'/>">
+                                            <c:choose>
+                                                <c:when test="${not empty i.imageUrl}"><span class="avatar" style="background-image: url('<c:out value="${i.imageUrl}"/>')"></span></c:when>
+                                                <c:otherwise><span class="avatar bg-primary-lt text-primary"><i class="ti ti-flower"></i></span></c:otherwise>
+                                            </c:choose>
+                                        </a>
                                     </div>
                                     <div class="col">
-                                        <c:out value="${i.productName}"/>
+                                        <a href="<c:url value='/products/${i.productSlug}'/>" class="text-reset"><c:out value="${i.productName}"/></a>
                                         <div class="small text-secondary"><fmt:formatNumber value="${i.unitPrice}" pattern="#,##0"/>₫ × ${i.quantity}</div>
                                     </div>
-                                    <div class="col-auto fw-bold"><fmt:formatNumber value="${i.lineTotal}" pattern="#,##0"/>₫</div>
+                                    <div class="col-auto text-end">
+                                        <div class="fw-bold"><fmt:formatNumber value="${i.lineTotal}" pattern="#,##0"/>₫</div>
+                                        <c:choose>
+                                            <c:when test="${i.reviewed}"><span class="badge bg-success-lt mt-1"><i class="ti ti-check me-1"></i>Đã đánh giá</span></c:when>
+                                            <c:when test="${order.canReview}">
+                                                <a href="<c:url value='/user/reviews/new'><c:param name='item' value='${i.itemId}'/></c:url>"
+                                                   class="btn btn-sm btn-warning mt-1"><i class="ti ti-star me-1"></i>Đánh giá</a>
+                                            </c:when>
+                                        </c:choose>
+                                    </div>
                                 </div>
-                            </a>
+                            </div>
                         </c:forEach>
                     </div>
                     <div class="card-footer small">

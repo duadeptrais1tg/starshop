@@ -34,7 +34,8 @@ public class UserOrderController {
     private static final String DETAIL_VIEW = "web/user/order-detail";
     private static final Map<String, String> MESSAGES = Map.of(
             "cancelled", "Đã hủy đơn hàng.",
-            "returnRequested", "Đã gửi yêu cầu trả hàng, shop sẽ phản hồi sớm.");
+            "returnRequested", "Đã gửi yêu cầu trả hàng, shop sẽ phản hồi sớm.",
+            "reviewed", "Cảm ơn bạn đã đánh giá sản phẩm!");
 
     private final UserOrderService orderService;
 

@@ -51,6 +51,8 @@ public class UserOrderDetail {
     private final boolean canCancel;
     /** Yêu cầu trả hàng được: đã giao, còn trong hạn, chưa từng yêu cầu. */
     private final boolean canRequestReturn;
+    /** Đơn đã giao: được đánh giá các sản phẩm chưa đánh giá. */
+    private final boolean canReview;
     /** Hạn cuối gửi yêu cầu trả hàng (khi đơn đã giao). */
     private final String returnDeadline;
     private final int returnDays;
@@ -58,6 +60,9 @@ public class UserOrderDetail {
     @Getter
     @Builder
     public static class Line {
+        private final Long itemId;
+        /** Dòng này đã được đánh giá. */
+        private final boolean reviewed;
         private final String productName;
         private final String productSlug;
         private final String imageUrl;

@@ -311,3 +311,35 @@
     border-left: 4px solid var(--tblr-primary, #d6336c) !important;
     background: #fff7fa;
 }
+
+/* ---------- Chọn số sao khi đánh giá (radio 5 -> 1, đảo chiều để tô các sao bên trái) ---------- */
+.ss-rate {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: .15rem;
+}
+
+.ss-rate input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ss-rate label {
+    font-size: 2rem;
+    line-height: 1;
+    color: #d0d5dd;
+    cursor: pointer;
+    transition: color .1s ease;
+}
+
+.ss-rate input:checked ~ label,
+.ss-rate label:hover,
+.ss-rate label:hover ~ label {
+    color: #f59f00;
+}
+
+.ss-rate input:focus-visible + label {
+    outline: 2px solid #d6336c;
+    border-radius: 4px;
+}

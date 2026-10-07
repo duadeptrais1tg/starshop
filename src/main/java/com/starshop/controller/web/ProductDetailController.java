@@ -37,6 +37,8 @@ public class ProductDetailController {
     @GetMapping("/products/{slug}")
     public String detail(@PathVariable String slug,
                          @RequestParam(defaultValue = "1") int page,
+                         @RequestParam(required = false) Integer star,
+                         @RequestParam(defaultValue = "false") boolean media,
                          @AuthenticationPrincipal UserPrincipal user,
                          Model model) {
         ProductDetailDto product = catalogService.getDetail(slug);
@@ -50,7 +52,11 @@ public class ProductDetailController {
         }
         model.addAttribute("product", product);
         model.addAttribute("favorited", user != null && favoriteService.isFavorite(user.getId(), product.getId()));
-        model.addAttribute("page", reviewService.productReviews(product.getId(), page - 1));
+        Integer starFilter = star != null && star >= 1 && star <= 5 ? star : null;
+        model.addAttribute("page", reviewService.productReviews(product.getId(), starFilter, media, page - 1));
+        model.addAttribute("reviewStar", starFilter);
+        model.addAttribute("reviewMedia", media);
+        model.addAttribute("mediaReviewCount", reviewService.countWithMedia(product.getId()));
         model.addAttribute("ratingSummary", reviewService.summary(product.getId()));
         model.addAttribute("related", catalogService.related(product, RELATED_LIMIT));
         return "web/products/detail";

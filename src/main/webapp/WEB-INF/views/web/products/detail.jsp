@@ -162,10 +162,22 @@
             </div>
         </div>
     </div>
+    <%-- Lọc đánh giá: theo số sao, có ảnh/video --%>
+    <c:if test="${ratingSummary.total > 0}">
+        <div class="card-body border-bottom d-flex flex-wrap gap-2">
+            <c:url var="reviewBase" value="/products/${product.slug}"/>
+            <a href="${reviewBase}#reviews" class="btn btn-sm ${empty reviewStar and not reviewMedia ? 'btn-primary' : ''}">Tất cả (${ratingSummary.total})</a>
+            <c:forEach var="i" begin="1" end="5">
+                <c:set var="s" value="${6 - i}"/>
+                <a href="${reviewBase}?star=${s}#reviews" class="btn btn-sm ${reviewStar == s ? 'btn-primary' : ''}">${s} ★ (${ratingSummary.count(s)})</a>
+            </c:forEach>
+            <a href="${reviewBase}?media=true#reviews" class="btn btn-sm ${reviewMedia ? 'btn-primary' : ''}"><i class="ti ti-photo me-1"></i>Có ảnh / video (${mediaReviewCount})</a>
+        </div>
+    </c:if>
     <c:choose>
         <c:when test="${page.totalElements == 0}">
             <div class="card-body text-secondary text-center py-4">
-                <i class="ti ti-message-circle fs-1 d-block mb-1"></i>Chưa có đánh giá nào cho sản phẩm này.
+                <i class="ti ti-message-circle fs-1 d-block mb-1"></i>${ratingSummary.total > 0 ? 'Không có đánh giá phù hợp bộ lọc.' : 'Chưa có đánh giá nào cho sản phẩm này.'}
             </div>
         </c:when>
         <c:otherwise>
